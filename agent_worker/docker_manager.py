@@ -5,6 +5,7 @@ Supports both local and remote Docker hosts with comprehensive error handling.
 """
 
 import logging
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -164,7 +165,7 @@ class DockerManager:
             # Get the agent script path from the agent itself
             script_path = agent.get_execution_script()
             
-            if not script_path.exists():
+            if not os.path.exists(script_path):
                 raise DockerException(f"Agent script not found: {script_path}")
             
             # Use docker cp command for reliability
