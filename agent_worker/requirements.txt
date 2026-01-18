@@ -1,0 +1,15 @@
+# Agent Worker Python Requirements
+
+# Docker SDK for Python
+docker>=7.0.0
+python-dotenv>=1.0.0
+
+# Python 3.8+ is required
+# No other external dependencies needed!
+# Uses standard library for:
+# - argparse (CLI)
+# - logging (logging)
+# - subprocess (git operations)
+# - json (data serialization)
+# - pathlib (file paths)
+# - dataclasses (configuration)

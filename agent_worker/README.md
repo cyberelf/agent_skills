@@ -1,6 +1,8 @@
 # Agent Worker 🤖
 
-A powerful tool for orchestrating containerized AI coding agents that work autonomously on development tasks. Agent Worker creates isolated Docker environments, manages git branches, and executes tasks using Claude Code with full automation and comprehensive statistics tracking.
+A powerful Python tool for orchestrating containerized AI coding agents that work autonomously on development tasks. Agent Worker creates isolated Docker environments, manages git branches, and executes tasks using Claude Code with full automation and comprehensive statistics tracking.
+
+**Version 2.1.0** - Enhanced with .env support, image caching, and clean tree validation!
 
 ## Features
 
@@ -11,6 +13,17 @@ A powerful tool for orchestrating containerized AI coding agents that work auton
 - 📊 **Detailed Statistics**: Track time, tokens, LOC changes, and more
 - 🔒 **Security**: Firewall rules and isolated workspace environments
 - 📝 **Comprehensive Logging**: Full visibility into agent operations
+- 🌐 **Remote Docker Support**: Execute on remote Docker hosts
+- 🔌 **Extensible**: Plugin architecture for multiple AI backends
+- 🛡️ **Robust Error Handling**: Comprehensive exception handling
+- ⚙️ **.env File Support**: Easy configuration management with environment files
+- ⚡ **Smart Image Caching**: Skip rebuilds for 90% faster subsequent runs
+- ✅ **Clean Tree Validation**: Ensures reproducible results from known state
+
+## Quick Links
+
+- **[Changelog](CHANGELOG.md)** - What's new in version 2.1.0
+- **[Docker Hub](https://hub.docker.com/)** - Docker installation
 
 ## Architecture
 
@@ -18,9 +31,10 @@ A powerful tool for orchestrating containerized AI coding agents that work auton
 ┌─────────────────────────────────────────────────────────────┐
 │                     Host System                             │
 │  ┌──────────────────────────────────────────────────────┐  │
-│  │           agent_worker.sh (Orchestrator)              │  │
+│  │         agent_worker.py (Orchestrator)                │  │
+│  │  • Validates prerequisites                            │  │
 │  │  • Creates git branch                                 │  │
-│  │  • Builds Docker image                                │  │
+│  │  • Builds Docker image (with caching)                 │  │
 │  │  • Manages container lifecycle                        │  │
 │  │  • Collects statistics                                │  │
 │  └────────────────┬─────────────────────────────────────┘  │
@@ -28,7 +42,7 @@ A powerful tool for orchestrating containerized AI coding agents that work auton
 │  ┌────────────────▼─────────────────────────────────────┐  │
 │  │           Docker Container                            │  │
 │  │  ┌────────────────────────────────────────────────┐  │  │
-│  │  │      agent_inside.sh (Executor)                │  │  │
+│  │  │    agent_inside.sh (Container Executor)        │  │  │
 │  │  │  • Runs Claude Code                            │  │  │
 │  │  │  • Monitors execution                          │  │  │
 │  │  │  • Captures metrics                            │  │  │
@@ -44,8 +58,16 @@ A powerful tool for orchestrating containerized AI coding agents that work auton
 
 ### Required:
 - **Docker**: Version 20.10 or higher
-- **Bash**: Version 4.0 or higher (pre-installed on most Linux/macOS)
 - **Git**: Version 2.0 or higher
+- **Anthropic API Key**: For Claude Code access
+
+### For Shell Version:
+## Prerequisites
+
+### Required:
+- **Docker**: Version 20.10 or higher
+- **Git**: Version 2.0 or higher
+- **Python**: Version 3.8 or higher
 - **Anthropic API Key**: For Claude Code access
 
 ### System Requirements:
@@ -60,55 +82,178 @@ A powerful tool for orchestrating containerized AI coding agents that work auton
 cd agent_worker
 ```
 
-### 2. Make Scripts Executable
+### 2. Install Python Dependencies
+
 ```bash
-chmod +x agent_worker.sh agent_inside.sh init-firewall.sh
+pip install -r requirements.txt
 ```
 
-### 3. Set Environment Variables
+### 3. Configure Environment Variables (Recommended)
+
+Create a `.env` file for easy configuration:
+
+```bash
+cp .env.example .env
+# Edit .env with your settings
+nano .env
+```
+
+Example `.env` file:
+```bash
+# Required
+ANTHROPIC_API_KEY=your_api_key_here
+
+# Optional
+ANTHROPIC_BASE_URL=https://api.anthropic.com
+TZ=America/New_York
+AGENT_TIMEOUT=3600
+```
+
+Or set environment variables directly:
 ```bash
 export ANTHROPIC_API_KEY="your-api-key-here"
-export TZ="Asia/Shanghai"  # Optional: set timezone
+export ANTHROPIC_BASE_URL="https://api.anthropic.com"  # Optional
+export TZ="Asia/Shanghai"  # Optional
 ```
 
-### 4. Build Docker Image
+### 4. Make Script Executable
+
 ```bash
-docker build -t agent-worker:latest .
+chmod +x agent_worker.py
 ```
+
+### 5. Verify Installation
+
+```bash
+./agent_worker.py --help
+```
+
+## Configuration
+
+The agent worker supports multiple configuration methods (in order of precedence):
+
+1. **Command-line arguments** (highest priority)
+2. **Environment variables**
+3. **.env file** (most convenient)
+4. **Defaults** (lowest priority)
+
+### .env File Configuration
+
+The `.env` file is automatically loaded from the agent_worker directory. This is the **recommended** approach for persistent configuration:
+
+```bash
+# Required Configuration
+ANTHROPIC_API_KEY=your_api_key_here
+
+# Optional Configuration
+ANTHROPIC_BASE_URL=https://api.anthropic.com    # Custom API endpoint
+TZ=America/New_York                              # Container timezone
+AGENT_TIMEOUT=3600                               # Execution timeout (seconds)
+DOCKER_HOST=tcp://remote-host:2375              # Remote Docker host
+PROJECT_PATH=/path/to/project                    # Default project directory
+AGENT_TYPE=claude                                # Agent type (currently: claude)
+DEBUG=true                                       # Enable debug logging
+```
+
+### Environment Variables
+
+All settings in `.env` can also be set as environment variables:
+
+```bash
+export ANTHROPIC_API_KEY="your-key"
+export ANTHROPIC_BASE_URL="https://custom.api.com"
+```
+
+### Command-Line Arguments
+
+Command-line arguments override both `.env` and environment variables. See usage examples below.
 
 ## Usage
 
 ### Basic Usage
 
 ```bash
-./agent_worker.sh --task "Your task description here"
+python3 agent_worker.py --task "Your task description here"
 ```
 
 ### With Custom Branch Name
 
 ```bash
-./agent_worker.sh \
+python3 agent_worker.py \
   --task "Fix TypeScript errors in src directory" \
   --branch "fix/typescript-errors"
 ```
 
-### Specify Project Path
+### Remote Docker Execution
 
 ```bash
-./agent_worker.sh \
-  --project /path/to/your/project \
-  --task "Implement user authentication"
+python3 agent_worker.py \
+  --remote-docker "tcp://192.168.1.100:2375" \
+  --task "Add authentication feature"
 ```
 
 ### Full Options
 
 ```bash
-./agent_worker.sh \
+python3 agent_worker.py \
   --project /path/to/project \
   --branch "feature/new-feature" \
   --task "Add new feature X with tests" \
+  --agent-type claude \
   --api-key "sk-ant-..." \
-  --timezone "UTC"
+  --base-url "https://api.custom.com" \
+  --remote-docker "tcp://host:2375" \
+  --timeout 7200 \
+  --force-rebuild \
+  --debug
+```
+
+**Important:** The agent worker requires a clean git working tree. Commit or stash any uncommitted changes before running.
+
+## Performance Optimizations
+
+The agent worker includes several optimizations for faster execution:
+
+### Docker Image Caching
+
+By default, the agent worker **skips rebuilding** the Docker image if it already exists. This dramatically speeds up subsequent runs:
+
+```bash
+# First run: builds image (~2-5 minutes)
+./agent_worker.py --task "Add feature A"
+
+# Second run: skips build (~instant)
+./agent_worker.py --task "Add feature B"
+```
+
+To force a rebuild (e.g., after updating dependencies):
+
+```bash
+./agent_worker.py --task "Your task" --force-rebuild
+```
+
+#### Clean Working Tree Requirement
+
+The agent worker requires a clean git working tree to ensure:
+- **Reproducible results** - starts from a known state
+- **Clear attribution** - all changes are from the agent
+- **Easy rollback** - can safely discard the agent's branch
+
+If you have uncommitted changes:
+
+```bash
+# Option 1: Commit your changes
+git add .
+git commit -m "My changes"
+
+# Option 2: Stash your changes
+git stash
+
+# Then run the agent
+./agent_worker.py --task "Your task"
+
+# Later: restore stashed changes
+git stash pop
 ```
 
 ## Command Line Options
@@ -117,9 +262,14 @@ docker build -t agent-worker:latest .
 |--------|-------------|---------|
 | `--project <path>` | Path to project directory | Current directory |
 | `--branch <name>` | Git branch name | `agent-task-<timestamp>` |
-| `--task <description>` | Task for the agent | Prompts if not provided |
+| `--task <description>` | Task for the agent (required) | - |
 | `--api-key <key>` | Anthropic API key | `$ANTHROPIC_API_KEY` |
-| `--timezone <tz>` | Container timezone | System timezone |
+| `--base-url <url>` | Custom API endpoint | `$ANTHROPIC_BASE_URL` |
+| `--timezone <tz>` | Container timezone | System timezone / UTC |
+| `--timeout <seconds>` | Execution timeout | 3600 (1 hour) |
+| `--remote-docker <url>` | Remote Docker host | Local Docker |
+| `--force-rebuild` | Force rebuild Docker image | false |
+| `--debug` | Enable debug logging | false |
 | `--help, -h` | Show help message | - |
 
 ## Environment Variables
@@ -136,14 +286,14 @@ docker build -t agent-worker:latest .
 ### Example 1: Fix Bugs
 
 ```bash
-./agent_worker.sh \
+python3 agent_worker.py \
   --task "Fix all ESLint errors in the codebase and ensure tests pass"
 ```
 
 ### Example 2: Add Feature
 
 ```bash
-./agent_worker.sh \
+python3 agent_worker.py \
   --branch "feature/dark-mode" \
   --task "Implement dark mode theme support with toggle in settings"
 ```
@@ -151,22 +301,29 @@ docker build -t agent-worker:latest .
 ### Example 3: Refactoring
 
 ```bash
-./agent_worker.sh \
+python3 agent_worker.py \
   --task "Refactor the authentication module to use async/await instead of callbacks"
 ```
 
 ### Example 4: Documentation
 
 ```bash
-./agent_worker.sh \
+python3 agent_worker.py \
   --task "Add JSDoc comments to all public functions in src/api/ directory"
 ```
 
-### Example 5: Testing
+### Example 5: Remote Docker Execution
 
 ```bash
-./agent_worker.sh \
-  --task "Write unit tests for the UserService class with 100% coverage"
+python3 agent_worker.py \
+  --remote-docker "tcp://build-server:2375" \
+  --task "Run full test suite and fix failures"
+```
+
+### Example 6: Debug Mode
+
+```bash
+python3 agent_worker.py --task "Refactor auth module" --debug
 ```
 
 ## Statistics & Reporting
@@ -250,7 +407,7 @@ newgrp docker
 # Ensure environment variable is set
 echo $ANTHROPIC_API_KEY
 # Or pass directly
-./agent_worker.sh --api-key "your-key"
+./agent_worker.py --api-key "your-key"
 ```
 
 ### Container Build Failures
@@ -272,6 +429,51 @@ If using services in container, ensure ports are available on host.
 
 ## Advanced Configuration
 
+### Adding New Agent Types (Python Version)
+
+The Python version uses a plugin architecture for agents:
+
+```python
+# agents/my_agent.py
+from .base_agent import BaseAgent, AgentException
+
+class MyCustomAgent(BaseAgent):
+    """Custom agent implementation"""
+    
+    def get_execution_script(self) -> str:
+        return str(self.config.project_path / 'agent_worker' / 'my_agent_script.sh')
+    
+    def execute(self, container, docker_manager):
+        # Custom execution logic
+        pass
+    
+    def parse_output(self, output: str):
+        # Custom output parsing
+        pass
+```
+
+Then update `agent_worker.py` to support your agent type.
+
+### Remote Docker Configuration
+
+```bash
+# TCP connection (unsecured - use with caution)
+python3 agent_worker.py \
+  --remote-docker "tcp://192.168.1.100:2375" \
+  --task "Your task"
+
+# Unix socket (local only)
+python3 agent_worker.py \
+  --remote-docker "unix:///var/run/docker.sock" \
+  --task "Your task"
+
+# SSH tunnel (recommended for remote)
+ssh -L 2375:localhost:2375 user@remote-host
+python3 agent_worker.py \
+  --remote-docker "tcp://localhost:2375" \
+  --task "Your task"
+```
+
 ### Custom Dockerfile Modifications
 
 Edit [Dockerfile](Dockerfile) to:
@@ -284,7 +486,9 @@ Edit [Dockerfile](Dockerfile) to:
 
 ```bash
 # Set 2-hour timeout (in seconds)
-AGENT_TIMEOUT=7200 ./agent_worker.sh --task "Long task"
+AGENT_TIMEOUT=7200 ./agent_worker.py --task "Long task"
+# Or use command-line argument
+./agent_worker.py --timeout 7200 --task "Long task"
 ```
 
 ### Multiple Projects
@@ -292,7 +496,7 @@ AGENT_TIMEOUT=7200 ./agent_worker.sh --task "Long task"
 ```bash
 # Process multiple projects sequentially
 for project in project1 project2 project3; do
-  ./agent_worker.sh --project "./$project" --task "Update dependencies"
+  ./agent_worker.py --project "./$project" --task "Update dependencies"
 done
 ```
 
@@ -319,12 +523,20 @@ done
 
 ```
 agent_worker/
-├── agent_worker.sh       # Main orchestrator (bash)
-├── agent_inside.sh       # Container execution script (bash)
-├── Dockerfile            # Container image definition
-├── init-firewall.sh      # Network security setup
-├── package.json          # Project metadata
-└── README.md            # This file
+├── agent_worker.py        # Main orchestrator
+├── config.py              # Configuration management
+├── docker_manager.py      # Docker operations
+├── agents/                # Agent implementations
+│   ├── __init__.py       
+│   ├── base_agent.py     # Abstract base class
+│   └── claude_agent.py   # Claude Code implementation
+├── container/             # Container-related files
+│   ├── Dockerfile        # Container image definition
+│   └── agent_inside.sh   # Container execution script
+├── requirements.txt       # Python dependencies
+├── .env.example          # Configuration template
+├── README.md             # This file
+└── CHANGELOG.md          # Version history
 ```
 
 ### Contributing
@@ -338,12 +550,16 @@ Contributions welcome! Please:
 ### Running in Development
 
 ```bash
-# Run linting (requires shellcheck)
-sudo apt-get install shellcheck  # or: brew install shellcheck
-shellcheck agent_worker.sh agent_inside.sh init-firewall.sh
+# Run Python linting
+pip install pylint
+pylint agent_worker.py config.py docker_manager.py agents/*.py
+
+# Run type checking
+pip install mypy
+mypy agent_worker.py config.py docker_manager.py
 
 # Test locally
-./agent_worker.sh --task "Simple test task"
+./agent_worker.py --task "Simple test task"
 ```
 
 ## License
