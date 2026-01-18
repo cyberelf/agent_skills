@@ -23,6 +23,7 @@ class Config:
     project_path: Path
     branch_name: str
     task_description: str
+    worktree_path: Optional[Path] = None  # Path to git worktree (if created)
     
     # Agent settings
     agent_type: str = 'claude'

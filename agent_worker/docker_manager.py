@@ -185,7 +185,7 @@ class DockerManager:
         except DockerSDKException as e:
             raise DockerException(f"Error copying agent script: {e}")
     
-    def execute_command(self, command: list, stream: bool = True) -> Dict[str, Any]:
+    def execute_command(self, command: list, stream: bool = True, log_file=None) -> Dict[str, Any]:
         """Execute a command in the container"""
         try:
             if not self.container:
@@ -204,17 +204,28 @@ class DockerManager:
                     }
                 )
                 
-                # Stream output
+                # Stream output in real-time
                 output_lines = []
                 for stdout, stderr in exec_instance.output:
                     if stdout:
                         line = stdout.decode('utf-8')
                         output_lines.append(line)
                         print(line, end='')
+                        
+                        # Write to log file in real-time if provided
+                        if log_file:
+                            log_file.write(line)
+                            log_file.flush()
+                    
                     if stderr:
                         line = stderr.decode('utf-8')
                         output_lines.append(line)
                         print(line, end='', file=sys.stderr)
+                        
+                        # Write to log file in real-time if provided
+                        if log_file:
+                            log_file.write(line)
+                            log_file.flush()
                 
                 return {
                     'exit_code': exec_instance.exit_code,

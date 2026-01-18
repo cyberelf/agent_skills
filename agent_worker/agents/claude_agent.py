@@ -32,15 +32,14 @@ class ClaudeAgent(BaseAgent):
             # Create task file
             self.create_task_file()
             
-            # Execute agent script
-            result = docker_manager.execute_command(
-                ['/workspace/agent_inside.sh'],
-                stream=True
-            )
-            
-            # Save output to log file
-            with open(self.run_config.output_file, 'w') as f:
-                f.write(result['output'])
+            # Open log file for real-time writing
+            with open(self.run_config.output_file, 'w') as log_file:
+                # Execute agent script with streaming
+                result = docker_manager.execute_command(
+                    ['/workspace/agent_inside.sh'],
+                    stream=True,
+                    log_file=log_file  # Pass log file for real-time writing
+                )
             
             # Parse output for statistics
             stats = self.parse_output(result['output'])

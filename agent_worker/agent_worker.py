@@ -164,10 +164,25 @@ class AgentWorker:
         except subprocess.CalledProcessError as e:
             raise AgentWorkerException(f"Failed to check git status: {e.stderr}")
     
-    def _create_git_branch(self):
-        """Create a new git branch for the task"""
+    def _create_git_worktree(self):
+        """Create a new git worktree for the task in a separate directory"""
         try:
             import subprocess
+            
+            # Create worktree directory path (in .agent_run)
+            worktree_parent = self.config.project_path / '.agent_run' / 'worktrees'
+            worktree_parent.mkdir(parents=True, exist_ok=True)
+            
+            worktree_path = worktree_parent / self.config.branch_name
+            
+            # Remove worktree if it already exists
+            if worktree_path.exists():
+                self.logger.info(f"🧹 Removing existing worktree: {worktree_path}")
+                subprocess.run(
+                    ['git', '-C', str(self.config.project_path), 'worktree', 'remove', str(worktree_path), '--force'],
+                    capture_output=True,
+                    text=True
+                )
             
             # Get current branch
             result = subprocess.run(
@@ -179,18 +194,24 @@ class AgentWorker:
             current_branch = result.stdout.strip()
             self.logger.info(f"🌿 Current branch: {current_branch}")
             
-            # Create and checkout new branch
+            # Create worktree with new branch
+            self.logger.info(f"🔨 Creating git worktree: {worktree_path}")
             subprocess.run(
-                ['git', '-C', str(self.config.project_path), 'checkout', '-b', self.config.branch_name],
+                ['git', '-C', str(self.config.project_path), 'worktree', 'add', '-b', self.config.branch_name, str(worktree_path)],
                 capture_output=True,
                 text=True,
                 check=True
             )
             
-            self.logger.info(f"✅ Branch {self.config.branch_name} created successfully")
+            # Update config to use worktree path
+            self.config.worktree_path = worktree_path
+            self.config.project_path = worktree_path
+            
+            self.logger.info(f"✅ Git worktree created: {worktree_path}")
+            self.logger.info(f"📂 Branch {self.config.branch_name} is isolated in worktree")
             
         except subprocess.CalledProcessError as e:
-            raise AgentWorkerException(f"Failed to create git branch: {e.stderr}")
+            raise AgentWorkerException(f"Failed to create git worktree: {e.stderr}")
     
     def _initialize_docker(self):
         """Initialize Docker manager"""
@@ -305,6 +326,7 @@ class AgentWorker:
                 'task': self.config.task_description,
                 'branch': self.config.branch_name,
                 'project_path': str(self.config.project_path),
+                'worktree_path': str(self.config.worktree_path) if self.config.worktree_path else None,
             }
             
             with open(self.run_config.stats_file, 'w') as f:
@@ -324,6 +346,8 @@ class AgentWorker:
         print("                    AGENT EXECUTION REPORT")
         print("═" * 65)
         print(f"  Branch:           {self.config.branch_name}")
+        if self.config.worktree_path:
+            print(f"  Worktree:         {self.config.worktree_path}")
         print(f"  Duration:         {duration_minutes}m {duration_seconds}s")
         print(f"  Exit Code:        {self.stats['exit_code']}")
         print("─" * 65)
@@ -344,7 +368,15 @@ class AgentWorker:
                 print(f"  • {error}")
         
         print(f"\n📁 Run directory: {self.run_config.run_dir}")
-        print(f"📝 Full logs: {self.run_config.log_file}\n")
+        print(f"📝 Full logs: {self.run_config.log_file}")
+        
+        if self.config.worktree_path:
+            print(f"\n🌿 Git worktree location: {self.config.worktree_path}")
+            print(f"   To review changes: cd {self.config.worktree_path}")
+            print(f"   To merge changes:  git merge {self.config.branch_name}")
+            print(f"   To remove worktree: git worktree remove {self.config.worktree_path}\n")
+        else:
+            print()
     
     def _cleanup(self):
         """Cleanup resources"""
@@ -363,8 +395,8 @@ class AgentWorker:
             # Setup run directory
             self._setup_run_directory()
             
-            # Create git branch
-            self._create_git_branch()
+            # Create git worktree
+            self._create_git_worktree()
             
             # Initialize Docker
             self._initialize_docker()
