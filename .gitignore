@@ -48,3 +48,6 @@ Thumbs.db
 # Temporary files
 *.tmp
 .cache/
+
+# Agent run directories
+.agent_run/
