@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  claude-server:
+    build: .
+    container_name: claude-code-server
+    ports:
+      - "8000:8000"
+      - "9090:9090"
+    environment:
+      # Required
+      - CLAUDE_API_KEY=${ANTHROPIC_API_KEY}
+      
+      # Server configuration
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8000
+      - SERVER_LOG_LEVEL=INFO
+      
+      # API configuration
+      - API_AUTH_ENABLED=false
+      - API_RATE_LIMIT_ENABLED=true
+      
+      # Session configuration
+      - SESSION_MAX_CONCURRENT=10
+      - SESSION_IDLE_TIMEOUT_SECONDS=1800
+      
+      # Storage (use redis for production)
+      - STORAGE_TYPE=redis
+      - STORAGE_REDIS_HOST=redis
+      - STORAGE_REDIS_PORT=6379
+      
+      # Monitoring
+      - MONITORING_PROMETHEUS_ENABLED=true
+      - MONITORING_LOGGING_FORMAT=json
+    
+    volumes:
+      # Mount workspace directory
+      - ${WORKSPACE_PATH:-./workspaces}:/workspaces
+      
+      # Mount logs
+      - ./logs:/app/logs
+    
+    depends_on:
+      - redis
+    
+    restart: unless-stopped
+    
+    networks:
+      - claude-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: claude-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    networks:
+      - claude-network
+
+  # Optional: Prometheus for metrics
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: claude-prometheus
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    restart: unless-stopped
+    networks:
+      - claude-network
+
+volumes:
+  redis-data:
+  prometheus-data:
+
+networks:
+  claude-network:
+    driver: bridge

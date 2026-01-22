@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "claude-code-server"
+version = "1.0.0"
+description = "Persistent server for Claude Code task execution via Agent SDK"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    {name = "Agent Skills Team"}
+]
+dependencies = [
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "websockets>=12.0",
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "claude-agent-sdk>=0.1.0",
+    "python-dotenv>=1.0.0",
+    "redis>=5.0.1",
+    "aioredis>=2.0.1",
+    "prometheus-client>=0.19.0",
+    "structlog>=24.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.3",
+    "pytest-asyncio>=0.23.3",
+    "pytest-cov>=4.1.0",
+    "httpx>=0.26.0",
+    "black>=23.12.1",
+    "ruff>=0.1.11",
+    "mypy>=1.8.0",
+]
+
+[project.scripts]
+claude-server = "claude_code_server.server:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["claude_code_server*"]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["claude_code_server/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

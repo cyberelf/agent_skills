@@ -1,0 +1,21 @@
+# Agent Manager Python Requirements
+
+# Core dependencies
+python-dotenv>=1.0.0  # Environment variable management
+
+# Claude Code Server integration (required)
+aiohttp>=3.9.0  # Async HTTP client for server API
+
+# Development dependencies (optional, for testing)
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+
+# Python 3.8+ is required
+# Uses standard library for:
+# - argparse (CLI)
+# - logging (logging)
+# - subprocess (git operations)
+# - json (data serialization)
+# - pathlib (file paths)
+# - dataclasses (configuration)
+# - asyncio (async support for server communication)
