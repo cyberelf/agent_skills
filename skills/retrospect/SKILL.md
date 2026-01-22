@@ -1,12 +1,12 @@
 ---
-name: introspection
+name: retrospect
 description: This skill reviews the current chat session and GitHub Copilot instructions to identify user-reported issues that should become new lessons, detect violations of existing instructions, and update instructions accordingly to prevent future mistakes.
 tags:
   - meta-skill
   - close-loop
 ---
 
-# Introspection Skill
+# Retrospect Skill
 
 This skill performs meta-analysis on the current conversation and project instructions to continuously improve code quality and adherence to established patterns.
 
@@ -27,7 +27,7 @@ Use this skill when:
 - A user explicitly requests instruction review or updates
 - After completing a significant feature or fix
 
-## Introspection Process
+## Retrospect Process
 
 ### Phase 1: Session Analysis
 
@@ -210,7 +210,7 @@ This document captures project-specific principles and lessons learned.
 
 Provide a summary:
 ```markdown
-## Introspection Summary
+## Retrospect Summary
 
 ### Lessons Learned
 1. [Lesson 1]: [What was learned and why]
@@ -233,9 +233,9 @@ Provide a summary:
 
 ## Output Format
 
-The introspection process should produce:
+The retrospect process should produce:
 
-1. **Introspection Report** (printed to console):
+1. **Retrospect Report** (printed to console):
    - Summary of lessons learned
    - List of instruction violations
    - Recommendations for improvement
@@ -278,7 +278,7 @@ Constitutions
 
 ## Implementation Guidelines
 
-### When Running Introspection
+### When Running Retrospect
 
 1. **Start with analysis**: Don't jump to solutions
 2. **Be thorough**: Review entire conversation history
@@ -286,12 +286,12 @@ Constitutions
 4. **Think long-term**: Will this instruction scale as the project grows?
 5. **Validate changes**: Test that new instructions would prevent the issue
 
-### After Introspection
+### After Retrospect
 
 1. **Apply updates immediately**: Update instruction files right away
 2. **Communicate changes**: Summarize what changed and why
 3. **Verify effectiveness**: Check if similar mistakes are prevented
-4. **Iterate**: Introspection is continuous, not one-time
+4. **Iterate**: Retrospect is continuous, not one-time
 
 ## Example Scenarios
 
