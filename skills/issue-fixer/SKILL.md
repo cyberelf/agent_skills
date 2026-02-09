@@ -1,12 +1,9 @@
 ---
 name: issue-fixer
 description: This skill provides a systematic approach for investigating and fixing bugs and issues in the codebase. Use this skill when users report bugs, unexpected behavior, test failures, or request fixes for specific issues. The skill guides through issue registration, root cause analysis, impact assessment, minimal code changes, quality validation, and E2E testing.
-tags:
-  - issue fixing
-  - bug fixing
-  - debugging
-  - root cause analysis
-  - quality assurance
+metadata:
+  author: cyberelf
+  version: "1.0"
 ---
 
 # Issue Fixer

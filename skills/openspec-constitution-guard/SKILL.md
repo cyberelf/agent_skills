@@ -1,11 +1,9 @@
 ---
 name: openspec-constitution-guard
 description: This skill composes project AGENTS.md constitution files into openspec/config.yaml to inject quality validation gates into OpenSpec workflows. Use this skill when initializing openspec for the first time in a project or when AGENTS.md files are updated. The skill ensures openspec artifacts are validated against project-specific quality criteria from constitutions.
-tags:
-  - openspec
-  - constitution
-  - meta-skill
-  - close-loop
+metadata:
+  author: cyberelf
+  version: "1.0"
 ---
 
 # OpenSpec Constitution Guard

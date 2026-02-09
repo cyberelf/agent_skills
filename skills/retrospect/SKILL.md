@@ -1,9 +1,9 @@
 ---
 name: retrospect
 description: This skill reviews the current chat session and GitHub Copilot instructions to identify user-reported issues that should become new lessons, detect violations of existing instructions, and update instructions accordingly to prevent future mistakes.
-tags:
-  - meta-skill
-  - close-loop
+metadata:
+  author: cyberelf
+  version: "1.0"
 ---
 
 # Retrospect Skill

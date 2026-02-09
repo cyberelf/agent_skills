@@ -1,15 +1,9 @@
 ---
 name: brownfield-onboarding
 description: This skill helps users get started with existing (brownfield) projects by scanning the codebase, documenting structure and purpose, analyzing architecture and technical stack, identifying design flaws, suggesting improvements for testing and CI/CD pipelines, and generating AI agent constitution files (AGENTS.md) with project-specific context, coding principles, and UI/UX guidelines.
-tags:
-  - onboarding
-  - brownfield
-  - documentation
-  - architecture analysis
-  - technical debt
-  - testing strategy
-  - agent constitution
-  - coding principles
+metadata:
+  author: cyberelf
+  version: "1.0"
 ---
 
 # Brownfield Project Onboarding
