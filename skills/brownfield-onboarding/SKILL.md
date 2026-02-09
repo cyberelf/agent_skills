@@ -195,7 +195,6 @@ This skill includes template files for generating AGENTS.md:
    - API design and security principles
    - Placed in backend directory
 
-📖 **For template usage details**, see [templates/README.md](./templates/README.md)
 
 ### Template Adaptation
 
@@ -334,13 +333,9 @@ This skill can be extended to include:
 - [mature-project.md](./references/mature-project.md) - Workflow for projects with existing AGENTS.md
 
 ### Template References
-- [templates/README.md](./templates/README.md) - Template usage guide
 - [templates/root-agents-template.md](./templates/root-agents-template.md) - Root constitution template
 - [templates/frontend-agents-template.md](./templates/frontend-agents-template.md) - Frontend constitution template
 - [templates/backend-agents-template.md](./templates/backend-agents-template.md) - Backend constitution template
-
-### Examples
-- [phase5-example.md](./references/phase5-example.md) - Complete Phase 5 execution example
 
 ---
 
