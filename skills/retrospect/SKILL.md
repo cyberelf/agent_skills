@@ -8,7 +8,7 @@ tags:
 
 # Retrospect Skill
 
-This skill performs meta-analysis on the current conversation and project instructions to continuously improve code quality and adherence to established patterns.
+This skill performs meta-analysis on the current conversation and project instructions to continuously improve code and process quality and adherence to established patterns.
 
 ## Purpose
 
