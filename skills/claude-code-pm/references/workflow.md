@@ -115,8 +115,8 @@ Wait for explicit confirmation before proceeding.
 ```bash
 cd <target_workspace>
 
-# Install OpenSpec protocol skill
-npx skills add Fission-AI/OpenSpec --agent all -y
+# Install OpenSpec protocol tools
+openspec init --tools claude
 
 echo "✅ OpenSpec installed"
 ```
@@ -452,8 +452,10 @@ claude -p --dangerously-skip-permissions --max-turns 30 \
 # Verify installation
 ls -la .agents/skills/
 
-# Reinstall with --agent all
-npx skills add Fission-AI/OpenSpec --agent all -y
+# Reinstall OpenSpec
+openspec init --tools claude
+
+# Reinstall other skills
 npx skills add cyberelf/agent_skills --skill <skill> --agent all -y
 ```
 
