@@ -180,15 +180,19 @@ Read `assets/templates/github-actions.template.yml`. Fill in the same placeholde
 
 Resolve `<skill_dir>` (the directory containing this SKILL.md) and run:
 
-    python <skill_dir>/scripts/initialize_sdd.py <project_root> --framework <fw> --ai-provider <agent>
+    python <skill_dir>/scripts/initialize_sdd.py <project_root> --framework <fw> --ai-provider <agent> [--script-shell sh|ps]
 
 If you are already inside the project directory, `<project_root>` is `.`.
 
 **Determining the `--ai-provider` value:** Use the name of the AI agent currently running this skill (e.g. `claude`, `copilot`, `gemini`, `opencode`, `codex`). You know this from your own identity — pass it as-is.
 
+**For SpecKit only — `--script-shell` parameter:** Choose the shell for generated scripts:
+- `sh` (default): Unix/shell scripts — use for Linux/macOS CI runners
+- `ps`: PowerShell scripts — use for Windows CI runners
+
 This script runs all frameworks **non-interactively**:
 - **OpenSpec**: `openspec init --tools <tool_id>` — `--ai-provider` mapped to OpenSpec's tool ID: `claude`, `opencode`, `codex`, `gemini`, `windsurf`, `qwen`, `codebuddy`, `kilocode` use the same name; `copilot`→`github-copilot`; `cursor-agent`→`cursor`; `roo`→`roocode`; all others→`all`
-- **SpecKit**: `specify init . --ai <provider>` — passes the provider name directly
+- **SpecKit**: `specify init . --ai <provider> --here --force --script <shell>` — passes the provider name and shell choice directly
 - **GSD**: `npx -y get-shit-done-cc@latest --<runtime> --local` — `--ai-provider` is mapped to a runtime flag: `claude`→`--claude`, `opencode`→`--opencode`, `codex`→`--codex`, all others→`--claude`
 
 The script also:

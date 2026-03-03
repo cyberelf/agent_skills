@@ -10,6 +10,7 @@ This script:
 
 Usage:
     python initialize_sdd.py <project_root> --framework openspec [--ai-provider claude]
+    python initialize_sdd.py <project_root> --framework speckit --ai-provider <provider> [--script-shell sh|ps]
 
 Arguments:
     project_root        Absolute or relative path to the target project root.
@@ -26,6 +27,8 @@ Options:
                             codebuddy, jules, kilocode, generic
                         GSD maps: claude→--claude, opencode→--opencode, codex→--codex,
                             all others→--claude (default)
+    --script-shell      For SpecKit: shell for generated scripts (default: sh).
+                        Valid values: sh, ps (PowerShell)
     --dry-run           Print commands without executing them.
 
 Requirements:
@@ -101,6 +104,14 @@ def parse_args() -> argparse.Namespace:
         metavar="PROVIDER",
         help="AI provider for SpecKit initialization (default: claude). "
              "See script docstring for full list.",
+    )
+    parser.add_argument(
+        "--script-shell",
+        default="sh",
+        choices=["sh", "ps"],
+        metavar="SHELL",
+        help="For SpecKit: shell for generated scripts (default: sh). "
+             "Valid values: sh, ps (PowerShell).",
     )
     parser.add_argument(
         "--dry-run",
@@ -219,8 +230,15 @@ def init_openspec(project_root: Path, ai_provider: str, dry_run: bool) -> bool:
     return True
 
 
-def init_speckit(project_root: Path, ai_provider: str, dry_run: bool) -> bool:
-    """Initialize SpecKit: install specify CLI and run specify init."""
+def init_speckit(project_root: Path, ai_provider: str, script_shell: str, dry_run: bool) -> bool:
+    """Initialize SpecKit: install specify CLI and run specify init.
+    
+    Args:
+        project_root: Path to project root
+        ai_provider: AI provider name (e.g., 'claude', 'gemini')
+        script_shell: Shell for generated scripts ('sh' or 'ps')
+        dry_run: Whether to run in dry-run mode
+    """
     print("\n=== SpecKit Initialization ===\n")
 
     # Check if specify CLI is available
@@ -244,8 +262,8 @@ def init_speckit(project_root: Path, ai_provider: str, dry_run: bool) -> bool:
         import os
         os.chdir(project_root)
         if not run_command(
-            ["specify", "init", ".", "--ai", ai_provider],
-            f"Initialize SpecKit with {ai_provider}",
+            ["specify", "init", ".", "--ai", ai_provider, "--here", "--force", "--script", script_shell],
+            f"Initialize SpecKit with {ai_provider} (script shell: {script_shell})",
             dry_run,
         ):
             print("ERROR: SpecKit initialization failed.", file=sys.stderr)
@@ -390,7 +408,7 @@ def main() -> None:
     if args.framework == "openspec":
         success = init_openspec(project_root, args.ai_provider, args.dry_run)
     elif args.framework == "speckit":
-        success = init_speckit(project_root, args.ai_provider, args.dry_run)
+        success = init_speckit(project_root, args.ai_provider, args.script_shell, args.dry_run)
     elif args.framework == "gsd":
         success = init_gsd(project_root, args.ai_provider, args.dry_run)
 
