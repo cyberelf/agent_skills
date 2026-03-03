@@ -1,70 +1,440 @@
 {
+  "_comment": "China concept stock (中概股) to A-share correlation mapping. Used by sentiment analyzer to map Polymarket signals to tradeable A-share sectors.",
   "stocks": {
     "byd": {
-      "name": "比亚迪",
+      "name": "比亚迪 BYD",
       "sector": "新能源车",
-      "a_shares": ["比亚迪", "宁德时代", "亿纬锂能", "天齐锂业", "赣锋锂业"],
-      "supply_chain": ["锂电池", "电机电控", "汽车零部件"]
+      "a_shares": [
+        "比亚迪(002594)",
+        "宁德时代(300750)",
+        "亿纬锂能(300014)",
+        "天齐锂业(002466)",
+        "赣锋锂业(002460)"
+      ],
+      "supply_chain": [
+        "锂电池",
+        "电机电控",
+        "汽车零部件",
+        "充电桩"
+      ],
+      "hk_listed": "01211.HK",
+      "correlation": 0.85
     },
     "nio": {
-      "name": "蔚来",
+      "name": "蔚来 NIO",
       "sector": "新能源车",
-      "a_shares": ["江淮汽车", "文灿股份", "德赛西威", "三花智控"],
-      "supply_chain": ["整车代工", "换电站", "智能座舱"]
+      "a_shares": [
+        "江淮汽车(600418)",
+        "文灿股份(603348)",
+        "德赛西威(002920)",
+        "三花智控(002050)"
+      ],
+      "supply_chain": [
+        "整车代工",
+        "换电站",
+        "智能座舱",
+        "热管理"
+      ],
+      "hk_listed": "09866.HK",
+      "correlation": 0.72
     },
     "xpeng": {
-      "name": "小鹏",
+      "name": "小鹏 XPeng",
       "sector": "新能源车",
-      "a_shares": ["德赛西威", "华阳集团", "保隆科技", "伯特利"],
-      "supply_chain": ["智能驾驶", "激光雷达", "智能座舱"]
+      "a_shares": [
+        "德赛西威(002920)",
+        "华阳集团(002906)",
+        "保隆科技(603197)",
+        "伯特利(603596)"
+      ],
+      "supply_chain": [
+        "智能驾驶",
+        "激光雷达",
+        "智能座舱",
+        "ADAS"
+      ],
+      "hk_listed": "09868.HK",
+      "correlation": 0.7
     },
-    "li_auto": {
-      "name": "理想",
+    "li auto": {
+      "name": "理想汽车 Li Auto",
       "sector": "新能源车",
-      "a_shares": ["东安动力", "保隆科技", "德赛西威", "拓普集团"],
-      "supply_chain": ["增程器", "空气悬架", "热管理"]
+      "a_shares": [
+        "东安动力(600178)",
+        "保隆科技(603197)",
+        "德赛西威(002920)",
+        "拓普集团(601689)"
+      ],
+      "supply_chain": [
+        "增程器",
+        "空气悬架",
+        "热管理",
+        "智能驾驶"
+      ],
+      "hk_listed": "02015.HK",
+      "correlation": 0.73
     },
     "tencent": {
-      "name": "腾讯",
+      "name": "腾讯 Tencent",
       "sector": "游戏/互联网",
-      "a_shares": ["三七互娱", "世纪华通", "完美世界", "吉比特", "恺英网络"],
-      "supply_chain": ["游戏研发", "游戏发行", "IP运营"]
+      "a_shares": [
+        "三七互娱(002555)",
+        "世纪华通(002602)",
+        "完美世界(002624)",
+        "吉比特(603444)",
+        "恺英网络(002517)"
+      ],
+      "supply_chain": [
+        "游戏研发",
+        "游戏发行",
+        "IP运营",
+        "短视频"
+      ],
+      "hk_listed": "00700.HK",
+      "correlation": 0.65
     },
     "alibaba": {
-      "name": "阿里巴巴",
+      "name": "阿里巴巴 Alibaba",
       "sector": "电商/云计算",
-      "a_shares": ["石基信息", "三江购物", "新华都", "丽人丽妆"],
-      "supply_chain": ["电商服务", "云计算", "新零售"]
+      "a_shares": [
+        "石基信息(002153)",
+        "三江购物(601116)",
+        "丽人丽妆(605136)",
+        "华致酒行(300755)"
+      ],
+      "supply_chain": [
+        "电商服务",
+        "云计算",
+        "新零售",
+        "物流"
+      ],
+      "hk_listed": "09988.HK",
+      "correlation": 0.6
     },
     "baidu": {
-      "name": "百度",
+      "name": "百度 Baidu",
       "sector": "AI/自动驾驶",
-      "a_shares": ["科大讯飞", "德赛西威", "华阳集团", "路畅科技"],
-      "supply_chain": ["AI芯片", "语音识别", "自动驾驶"]
+      "a_shares": [
+        "科大讯飞(002230)",
+        "德赛西威(002920)",
+        "华阳集团(002906)",
+        "路畅科技(002813)"
+      ],
+      "supply_chain": [
+        "AI芯片",
+        "语音识别",
+        "自动驾驶",
+        "地图服务"
+      ],
+      "hk_listed": "09888.HK",
+      "correlation": 0.62
     },
     "xiaomi": {
-      "name": "小米",
-      "sector": "智能硬件",
-      "a_shares": ["小米集团-W", "石头科技", "九号公司", "智米科技概念股"],
-      "supply_chain": ["智能家居", "IoT模块", "消费电子"]
+      "name": "小米 Xiaomi",
+      "sector": "智能硬件/手机",
+      "a_shares": [
+        "石头科技(688169)",
+        "九号公司(689009)",
+        "小熊电器(002959)",
+        "极米科技(688696)"
+      ],
+      "supply_chain": [
+        "智能家居",
+        "IoT模块",
+        "消费电子",
+        "显示面板"
+      ],
+      "hk_listed": "01810.HK",
+      "correlation": 0.68
     },
     "pinduoduo": {
-      "name": "拼多多",
-      "sector": "电商",
-      "a_shares": ["供销大集", "农产品电商概念股", "下沉市场概念股"],
-      "supply_chain": ["农产品供应链", "社交电商", "下沉市场"]
+      "name": "拼多多 PDD/Temu",
+      "sector": "电商/跨境",
+      "a_shares": [
+        "供销大集(000564)",
+        "申通快递(002468)",
+        "圆通速递(600233)",
+        "中通快递-W(02057.HK)"
+      ],
+      "supply_chain": [
+        "农产品供应链",
+        "社交电商",
+        "跨境电商",
+        "快递物流"
+      ],
+      "hk_listed": null,
+      "us_listed": "PDD",
+      "correlation": 0.55
     },
     "jd": {
-      "name": "京东",
+      "name": "京东 JD.com",
       "sector": "电商/物流",
-      "a_shares": ["德邦股份", "新宁物流", "华贸物流", "物流板块"],
-      "supply_chain": ["物流配送", "仓储管理", "供应链服务"]
+      "a_shares": [
+        "德邦股份(603056)",
+        "新宁物流(300013)",
+        "华贸物流(603128)",
+        "顺丰控股(002352)"
+      ],
+      "supply_chain": [
+        "物流配送",
+        "仓储管理",
+        "供应链服务",
+        "即时配送"
+      ],
+      "hk_listed": "09618.HK",
+      "correlation": 0.62
     },
     "meituan": {
-      "name": "美团",
-      "sector": "本地生活",
-      "a_shares": ["外卖配送概念股", "餐饮供应链", "到店服务概念股"],
-      "supply_chain": ["外卖配送", "餐饮供应链", "到店服务"]
+      "name": "美团 Meituan",
+      "sector": "本地生活/外卖",
+      "a_shares": [
+        "顺丰控股(002352)",
+        "圆通速递(600233)",
+        "韵达股份(002120)",
+        "中通快递-W"
+      ],
+      "supply_chain": [
+        "外卖配送",
+        "餐饮供应链",
+        "酒旅预订",
+        "无人机配送"
+      ],
+      "hk_listed": "03690.HK",
+      "correlation": 0.6
+    },
+    "netease": {
+      "name": "网易 NetEase",
+      "sector": "游戏/教育",
+      "a_shares": [
+        "三七互娱(002555)",
+        "恺英网络(002517)",
+        "完美世界(002624)"
+      ],
+      "supply_chain": [
+        "游戏研发",
+        "在线教育",
+        "邮件服务"
+      ],
+      "hk_listed": "09999.HK",
+      "correlation": 0.63
+    },
+    "kuaishou": {
+      "name": "快手 Kuaishou",
+      "sector": "短视频/直播",
+      "a_shares": [
+        "浙文互联(600986)",
+        "天下秀(600556)",
+        "芒果超媒(300413)"
+      ],
+      "supply_chain": [
+        "短视频",
+        "直播电商",
+        "内容MCN"
+      ],
+      "hk_listed": "01024.HK",
+      "correlation": 0.58
+    },
+    "bilibili": {
+      "name": "哔哩哔哩 Bilibili",
+      "sector": "视频平台/Z世代",
+      "a_shares": [
+        "芒果超媒(300413)",
+        "三七互娱(002555)",
+        "游族网络(002174)"
+      ],
+      "supply_chain": [
+        "动漫版权",
+        "游戏联运",
+        "UP主生态"
+      ],
+      "hk_listed": "09626.HK",
+      "correlation": 0.55
+    },
+    "smic": {
+      "name": "中芯国际 SMIC",
+      "sector": "半导体/芯片制造",
+      "a_shares": [
+        "中芯国际(688981)",
+        "北方华创(002371)",
+        "澜起科技(688008)",
+        "芯原股份(688521)",
+        "华虹半导体(688347)"
+      ],
+      "supply_chain": [
+        "晶圆代工",
+        "AI芯片",
+        "存储芯片",
+        "半导体设备"
+      ],
+      "hk_listed": "00981.HK",
+      "correlation": 0.8
+    },
+    "huawei": {
+      "name": "华为 Huawei (供应链)",
+      "sector": "通信设备/手机/AI",
+      "a_shares": [
+        "中兴通讯(000063)",
+        "沪电股份(002463)",
+        "TCL科技(000100)",
+        "烽火通信(600498)",
+        "立讯精密(002475)"
+      ],
+      "supply_chain": [
+        "5G设备",
+        "服务器",
+        "智能手机",
+        "光通信"
+      ],
+      "hk_listed": null,
+      "correlation": 0.78
+    },
+    "evergrande": {
+      "name": "恒大/房地产 Real Estate",
+      "sector": "房地产",
+      "a_shares": [
+        "万科A(000002)",
+        "保利发展(600048)",
+        "招商蛇口(001979)",
+        "龙湖集团(00960.HK)",
+        "金地集团(600383)"
+      ],
+      "supply_chain": [
+        "房地产开发",
+        "物业管理",
+        "建材"
+      ],
+      "hk_listed": "03333.HK",
+      "correlation": 0.72
+    },
+    "anta": {
+      "name": "安踏 ANTA Sports",
+      "sector": "运动服饰/消费",
+      "a_shares": [
+        "贵人鸟(603555)",
+        "特步国际(01368.HK)",
+        "361度(01361.HK)",
+        "李宁(02331.HK)"
+      ],
+      "supply_chain": [
+        "运动鞋服",
+        "运动装备",
+        "品牌授权"
+      ],
+      "hk_listed": "02020.HK",
+      "correlation": 0.62
+    },
+    "haier": {
+      "name": "海尔 Haier Smart Home",
+      "sector": "家电",
+      "a_shares": [
+        "海尔智家(600690)",
+        "美的集团(000333)",
+        "格力电器(000651)",
+        "老板电器(002508)"
+      ],
+      "supply_chain": [
+        "白色家电",
+        "智能家居",
+        "物联网"
+      ],
+      "hk_listed": "06690.HK",
+      "correlation": 0.7
+    },
+    "midea": {
+      "name": "美的 Midea",
+      "sector": "家电/机器人",
+      "a_shares": [
+        "美的集团(000333)",
+        "格力电器(000651)",
+        "海信家电(000921)",
+        "华帝股份(002035)"
+      ],
+      "supply_chain": [
+        "空调",
+        "家电",
+        "工业机器人",
+        "自动化"
+      ],
+      "hk_listed": "00300.HK",
+      "correlation": 0.72
+    },
+    "foxconn": {
+      "name": "富士康/工业富联 Foxconn",
+      "sector": "电子制造/EMS",
+      "a_shares": [
+        "工业富联(601138)",
+        "立讯精密(002475)",
+        "鹏鼎控股(002938)",
+        "蓝思科技(300433)"
+      ],
+      "supply_chain": [
+        "EMS代工",
+        "PCB",
+        "结构件",
+        "数据中心"
+      ],
+      "hk_listed": "02038.HK",
+      "correlation": 0.76
+    }
+  },
+  "macro_factors": {
+    "pboc_rate_cut": {
+      "description": "PBOC interest rate cut (降息)",
+      "bullish_sectors": [
+        "房地产",
+        "银行",
+        "新能源"
+      ],
+      "a_share_beneficiaries": [
+        "万科A(000002)",
+        "建设银行(601939)",
+        "宁德时代(300750)"
+      ]
+    },
+    "us_china_trade_war": {
+      "description": "US-China trade war escalation",
+      "bearish_sectors": [
+        "出口制造",
+        "半导体",
+        "电商"
+      ],
+      "a_share_impacted": [
+        "立讯精密(002475)",
+        "中芯国际(688981)",
+        "阿里巴巴(09988.HK)"
+      ]
+    },
+    "taiwan_tensions": {
+      "description": "Taiwan strait tensions",
+      "bullish_sectors": [
+        "军工",
+        "稀土",
+        "国产替代"
+      ],
+      "bearish_sectors": [
+        "航空",
+        "旅游",
+        "高科技"
+      ],
+      "a_share_beneficiaries": [
+        "中航沈飞(600760)",
+        "北方稀土(600111)",
+        "中芯国际(688981)"
+      ]
+    },
+    "china_stimulus": {
+      "description": "China fiscal/monetary stimulus package",
+      "bullish_sectors": [
+        "基建",
+        "消费",
+        "新能源",
+        "半导体"
+      ],
+      "a_share_beneficiaries": [
+        "中国建筑(601668)",
+        "贵州茅台(600519)",
+        "比亚迪(002594)"
+      ]
     }
   }
 }

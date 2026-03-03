@@ -1,0 +1,69 @@
+{
+  "_comment": "Configurable signal weights for the Sentiment Aggregator. Weights are normalized automatically. Edit these to tune how much each source influences the composite score.",
+  "_sources": {
+    "polymarket":        "Real-money prediction markets — highest reliability, skin-in-the-game signal",
+    "market_data":       "Live financial market proxies (FXI, VIX, Copper, AUD/USD) — objective price signals",
+    "news_rss":          "RSS news feed sentiment (Reuters, SCMP, FT, WSJ) — directional but noisy",
+    "fear_greed":        "CNN Fear & Greed Index — market psychology gauge",
+    "northbound_flow":   "ETF volume-based northbound flow proxy — institutional inflow estimate",
+    "social_sentiment":  "Reddit investor sentiment — retail mood, highest noise",
+    "macro_indicators":  "World Bank economic indicators — structural/lagging signal"
+  },
+  "_profiles": {
+    "default": {
+      "_note": "Balanced weights for general use",
+      "polymarket":        0.35,
+      "market_data":       0.25,
+      "news_rss":          0.20,
+      "fear_greed":        0.10,
+      "northbound_flow":   0.05,
+      "social_sentiment":  0.04,
+      "macro_indicators":  0.01
+    },
+    "news_heavy": {
+      "_note": "Emphasize news sentiment — use during earnings season or policy announcements",
+      "polymarket":        0.25,
+      "market_data":       0.20,
+      "news_rss":          0.35,
+      "fear_greed":        0.10,
+      "northbound_flow":   0.05,
+      "social_sentiment":  0.03,
+      "macro_indicators":  0.02
+    },
+    "market_only": {
+      "_note": "Use only objective market price signals — minimal noise from text sources",
+      "polymarket":        0.50,
+      "market_data":       0.40,
+      "news_rss":          0.05,
+      "fear_greed":        0.05,
+      "northbound_flow":   0.00,
+      "social_sentiment":  0.00,
+      "macro_indicators":  0.00
+    },
+    "sentiment_focus": {
+      "_note": "Emphasize crowd sentiment — useful for contrarian analysis",
+      "polymarket":        0.20,
+      "market_data":       0.15,
+      "news_rss":          0.20,
+      "fear_greed":        0.25,
+      "northbound_flow":   0.05,
+      "social_sentiment":  0.12,
+      "macro_indicators":  0.03
+    }
+  },
+  "_active_profile": "default",
+  "_instructions": [
+    "Copy the weights from your preferred profile into the root level.",
+    "Or edit the root-level weights directly.",
+    "The analyzer reads root-level keys first, then falls back to 'default' profile.",
+    "All weights should sum to 1.0 (the analyzer normalizes anyway, but it's good practice).",
+    "Set a source weight to 0 to completely exclude it from analysis."
+  ],
+  "polymarket":        0.35,
+  "market_data":       0.25,
+  "news_rss":          0.20,
+  "fear_greed":        0.10,
+  "northbound_flow":   0.05,
+  "social_sentiment":  0.04,
+  "macro_indicators":  0.01
+}
