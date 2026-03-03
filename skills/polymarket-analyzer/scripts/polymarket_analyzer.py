@@ -910,7 +910,7 @@ class SignalAggregator:
       3. Cross-source agreement bonus (up to +18% confidence when 3+ sources agree)
       4. Thresholded direction assignment with confidence (0.08 threshold)
 
-    Weights are overridable via data/signal_weights.json.
+    Weights are overridable via references/signal_weights.json.
     """
 
     DEFAULT_WEIGHTS = {
@@ -1248,8 +1248,8 @@ def load_stock_mapping() -> Dict:
         "pinduoduo": {"name": "拼多多",   "sector": "电商",        "a_shares": ["供销大集", "申通快递"]},
     }
 
-    skill_dir = os.path.dirname(os.path.abspath(__file__))
-    mapping_file = os.path.join(skill_dir, "china_stock_mapping.json")
+    skill_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    mapping_file = os.path.join(skill_dir, "references", "china_stock_mapping.json")
 
     if os.path.exists(mapping_file):
         try:
@@ -1263,9 +1263,9 @@ def load_stock_mapping() -> Dict:
 
 
 def load_signal_weights() -> Dict[str, float]:
-    """Load custom signal weights from data/signal_weights.json if present."""
-    skill_dir = os.path.dirname(os.path.abspath(__file__))
-    weights_file = os.path.join(skill_dir, "data", "signal_weights.json")
+    """Load custom signal weights from references/signal_weights.json if present."""
+    skill_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    weights_file = os.path.join(skill_dir, "references", "signal_weights.json")
     if os.path.exists(weights_file):
         try:
             with open(weights_file, "r") as f:
@@ -1295,7 +1295,7 @@ def main() -> CompositeSentiment:
     custom_weights = load_signal_weights()
     print(f"  ✓ Loaded {len(stock_mapping)} China concept stock → A-share mappings")
     if custom_weights:
-        print(f"  ✓ Loaded custom signal weights from data/signal_weights.json")
+        print(f"  ✓ Loaded custom signal weights from references/signal_weights.json")
 
     all_signals: List[SentimentSignal] = []
 
