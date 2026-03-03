@@ -4,12 +4,15 @@
 Copy project-initializer check scripts from the skill's assets/scripts/ directory
 into the target project's scripts/ directory.
 
-All three runtime variants (.sh, .ps1, .js) of each required script are installed
-so the project can run checks on Linux, macOS, and Windows CI runners without
-modification.
+Only the single most appropriate runtime variant of each script is installed,
+based on the current operating system and available shells:
+
+  Priority: .sh  (Linux/macOS with bash)
+         → .js  (any OS with Node.js — cross-platform fallback)
+         → .ps1 (Windows without bash)
 
 Usage:
-    python assets/install_scripts.py <project_root> --framework <openspec|speckit|gsd>
+    python scripts/install_scripts.py <project_root> --framework <openspec|speckit|gsd>
 
 Arguments:
     project_root        Absolute or relative path to the target project root.
@@ -20,13 +23,13 @@ Options:
                         (default: scripts)
     --dry-run           Print what would be copied without creating any files.
 
-Installed scripts (3 variants each):
-    check_project_tag.{sh,ps1,js}       — AGENTS.md identity tag validation
-    check_sdd_<framework>.{sh,ps1,js}   — SDD process documentation checks
+Installed scripts (one variant each):
+    check_project_tag.{sh|js|ps1}       — AGENTS.md identity tag validation
+    check_sdd_<framework>.{sh|js|ps1}   — SDD process documentation checks
 
 Example:
-    python .agents/skills/project-initializer/assets/install_scripts.py . --framework gsd
-    python .agents/skills/project-initializer/assets/install_scripts.py /path/to/project --framework openspec --dry-run
+    python .agents/skills/project-initializer/scripts/install_scripts.py . --framework gsd
+    python .agents/skills/project-initializer/scripts/install_scripts.py /path/to/project --framework openspec --dry-run
 """
 
 import argparse
@@ -36,10 +39,32 @@ import sys
 from pathlib import Path
 
 FRAMEWORKS = ("openspec", "speckit", "gsd")
-VARIANTS = (".sh", ".ps1", ".js")
+
+# Variant priority: sh (Unix with bash) > js (cross-platform Node) > ps1 (Windows)
+_VARIANT_PRIORITY = (".sh", ".js", ".ps1")
 
 # Required scripts: always-installed base names
 ALWAYS_INSTALL = ["check_project_tag"]
+
+
+def _pick_variant(src_dir: Path, base: str) -> str | None:
+    """Return the best available script extension for *base* given the current OS.
+
+    Selection order on Linux/macOS: .sh → .js → .ps1
+    Selection order on Windows:     .ps1 → .js → .sh
+    Returns None if no variant exists.
+    """
+    if sys.platform == "win32":
+        priority = (".ps1", ".js", ".sh")
+    elif shutil.which("bash"):
+        priority = (".sh", ".js", ".ps1")
+    else:
+        priority = (".js", ".sh", ".ps1")
+
+    for ext in priority:
+        if (src_dir / (base + ext)).exists():
+            return ext
+    return None
 
 
 def parse_args() -> argparse.Namespace:
@@ -74,28 +99,19 @@ def parse_args() -> argparse.Namespace:
 
 
 def collect_files(src_dir: Path, framework: str) -> list[Path]:
-    """Return the list of source script files to install, warning on missing ones."""
+    """Return the list of source script files to install (one per base name)."""
     bases = ALWAYS_INSTALL + [f"check_sdd_{framework}"]
     files: list[Path] = []
 
     for base in bases:
-        found_any = False
-        for ext in VARIANTS:
-            candidate = src_dir / (base + ext)
-            if candidate.exists():
-                files.append(candidate)
-                found_any = True
-            else:
-                print(
-                    f"WARNING: Expected script not found: {candidate}",
-                    file=sys.stderr,
-                )
-        if not found_any:
+        ext = _pick_variant(src_dir, base)
+        if ext is None:
             print(
-                f"ERROR: No variants found for '{base}' — aborting.",
+                f"ERROR: No variants found for '{base}' in {src_dir} — aborting.",
                 file=sys.stderr,
             )
             sys.exit(1)
+        files.append(src_dir / (base + ext))
 
     return files
 
@@ -138,8 +154,10 @@ def main() -> None:
     args = parse_args()
 
     # Resolve paths
-    skill_assets = Path(__file__).parent          # assets/ dir next to this script
-    src_dir = skill_assets / "scripts"
+    # This script lives in skills/project-initializer/scripts/
+    # The check scripts live in skills/project-initializer/assets/scripts/
+    skill_root = Path(__file__).parent.parent   # project-initializer/
+    src_dir = skill_root / "assets" / "scripts"
     project_root = Path(args.project_root).resolve()
     dest_dir = project_root / args.scripts_dir
 

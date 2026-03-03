@@ -1,6 +1,6 @@
 ---
 name: project-initializer
-description: Helps users scaffold new projects with production-ready files: README.md, AGENTS.md (agent memory), and CI/CD pipelines (GitLab CI, GitHub Actions, or both). Handles tech stack selection, coding standards ingestion, quality level configuration (demo vs. production), and SDD framework integration (OpenSpec, SpecKit, or GSD). Use this skill whenever a user wants to create a new project, initialize a repository, set up CI/CD, choose a spec-driven development workflow, scaffold project files, or asks about project structure and agent memory files. Even if the user only asks about one part (e.g., "set up CI/CD" or "create AGENTS.md"), use this skill — it ensures all files stay consistent with each other.
+description: Helps users scaffold new projects with production-ready files: README.md, AGENTS.md (agent memory), and CI/CD pipelines (GitLab CI, GitHub Actions, or both). Handles tech stack selection, coding standards ingestion, quality level configuration (demo vs. production), and SDD framework integration (OpenSpec, SpecKit, or GSD). Documentation is generated in Chinese (中文) by default, with support for other languages upon request. Use this skill whenever a user wants to create a new project, initialize a repository, set up CI/CD, choose a spec-driven development workflow, scaffold project files, or asks about project structure and agent memory files. Even if the user only asks about one part (e.g., "set up CI/CD" or "create AGENTS.md"), use this skill — it ensures all files stay consistent with each other.
 ---
 
 # Project Initializer
@@ -21,49 +21,55 @@ The skill does five things:
 
 ## Phase 1: Interview
 
-Ask the user the following questions. You can ask them all in one message or spread them across a natural conversation — use your judgment based on how much context you already have.
+使用 `AskUserQuestion` 与用户进行访谈，了解项目情况。逐个问题与用户交互 — 不要跳过问题或代表用户做出决定。在进入第2阶段（文件生成）前，总结他们的答案并确认理解。
 
-**Required information:**
+根据已有的上下文信息，可以一次性提出所有问题，也可以在自然对话中分散提问 — 根据情况自行判断。
 
-1. **Project name and one-sentence description** — What is this project? What problem does it solve?
+**必需信息：**
 
-2. **Tech stack** — Language(s), framework(s), package manager, database, deployment target. If they're unsure, suggest sensible defaults based on the problem domain.
+对于以下每个问题，使用 `AskUserQuestion` 与用户交互式提问。不要跳过问题，不要代替用户做决定。当提供建议或默认值时，请通过 `AskUserQuestion` 确认用户同意后再继续。
 
-3. **Quality level** — Is this a demo/prototype or a production project?
-   - *Demo*: minimal CI, no coverage gates, no security scans, lightweight SDD
-   - *Production*: full CI, coverage thresholds, security scans, strict SDD alignment checks
+1. **项目名称和一句话描述** — 使用 `AskUserQuestion`。这个项目是什么？它解决了什么问题？
 
-4. **SDD framework** — Spec-driven development system the team will use. Present all three options with a brief description:
+2. **技术栈** — 编程语言、框架、包管理工具、数据库、部署目标等。使用 `AskUserQuestion` 提示用户。用户表示不确定或要求建议时，根据问题领域提供合理的默认值 — 但通过 `AskUserQuestion` 获得用户确认后再继续。
 
-   | Framework | Style | Best for |
-   |-----------|-------|----------|
-   | **OpenSpec** | Fluid, brownfield-first, delta specs | Existing codebases, solo devs, iterative work |
-   | **SpecKit** | Constitution-enforced, phase-gated | Teams, enterprise, strict quality standards |
-   | **GSD** | Phase-based roadmap, context-engineering | Solo devs who want AI to do the heavy lifting |
+3. **质量等级** — 使用 `AskUserQuestion` 提问：这是演示/原型项目还是生产项目？
+   - *演示*：最小化CI、无覆盖率门槛、无安全扫描、轻量级SDD
+   - *生产*：完整CI、覆盖率门槛、安全扫描、严格的SDD对齐检查
 
-   > After selection, read the corresponding reference file for detailed knowledge:
+4. **SDD框架** — 使用 `AskUserQuestion` 展示所有三个选项，询问团队将使用哪一个。包括下面的描述以帮助他们做出决定。
+
+   | 框架 | 风格 | 适用于 |
+   |------|------|--------|
+   | **OpenSpec** | 流畅、棕地优先、增量规范 | 现有代码库、个人开发者、迭代工作 |
+   | **SpecKit** | 宪法强制、分阶段 | 团队、企业、严格的质量标准 |
+   | **GSD** | 基于阶段的路线图、上下文工程 | 想让AI做主力工作的个人开发者 |
+
+   > 选择后，阅读相应的参考文件了解更多细节：
    > - OpenSpec → `references/openspec.md`
    > - SpecKit → `references/speckit.md`
    > - GSD → `references/gsd.md`
 
-5. **CI platform** — Which CI system(s) should be configured? Allow selecting one or both:
-   - *GitLab CI* — generates `.gitlab-ci.yml`
-   - *GitHub Actions* — generates `.github/workflows/ci.yml`
-   - *Both* — generates both files, kept consistent with each other
+5. **CI平台** — 使用 `AskUserQuestion` 提问：应该配置哪些CI系统？
+   - *GitLab CI* — 生成 `.gitlab-ci.yml`
+   - *GitHub Actions* — 生成 `.github/workflows/ci.yml`
+   - *两者* — 生成两个文件，保持一致
 
-6. **Main branch name** — What branch triggers a release pipeline? (default: `main`)
+6. **主分支名称** — 使用 `AskUserQuestion` 提问哪个分支会触发发布流程。建议用 `main` 作为默认值，但要向用户确认。
 
-7. **Coding standards** — Does the team have existing coding standards, a style guide, or a linting config? Options:
-   - *Paste content directly* — user pastes the standards into the conversation
-   - *File path* — user provides a path to an existing file (e.g., `docs/coding-standards.md`, `.eslintrc.json`)
-   - *None* — derive sensible defaults from the tech stack
+7. **编码规范** — 使用 `AskUserQuestion` 提问：团队是否有现有的编码规范、风格指南或代码检查配置？
+   - *直接粘贴内容* — 用户将规范粘贴到对话中
+   - *文件路径* — 用户提供现有文件的路径（如 `docs/coding-standards.md`、`.eslintrc.json`）
+   - *无* — 如果没有，使用技术栈的合理默认值
    
-   If provided, read and summarize the standards. They will be injected into AGENTS.md and used to configure CI lint commands.
+   如果提供了规范，请阅读并总结。规范将被注入到AGENTS.md中，并用于配置CI代码检查命令。
 
-8. **Additional quality requirements** (for production projects):
-   - Minimum test coverage % (e.g., 80%)
-   - Static analysis tools (e.g., ESLint, Pylint, SonarQube) — may already be covered by coding standards
-   - Security scanning (Trivy, Semgrep, Bandit, etc.)
+8. **额外质量要求**（生产项目）— 使用 `AskUserQuestion` 提问：
+   - 最小测试覆盖率百分比（如 80%）
+   - 静态分析工具（如 ESLint、Pylint、SonarQube）— 可能已被编码规范涵盖
+   - 安全扫描（Trivy、Semgrep、Bandit等）
+
+9. **文档语言** — 使用 `AskUserQuestion` 提问：README.md和AGENTS.md应该用什么语言编写？默认为中文（中文），除非用户指定其他语言。
 
 ---
 
@@ -72,6 +78,10 @@ Ask the user the following questions. You can ask them all in one message or spr
 > **CRITICAL — Template Fidelity:** Reproduce every CI pipeline template verbatim. Substitute only the `{{PLACEHOLDER}}` tokens. Do **not** remove, merge, rename, or omit any stages, jobs, or comment blocks. The complete job set in each template is the minimum viable pipeline; dropping any job will break SDD checks, project-tag validation, or coverage gates. For demo projects, dial down strictness through placeholder values (e.g., set `{{COVERAGE_THRESHOLD}}` to `0`, `{{SECURITY_SCAN_CMD}}` to `echo "skipped"`) — never by removing jobs.
 
 After gathering information, generate files. Use the templates in `assets/templates/` as starting points and fill in the placeholders.
+
+> **Path resolution — read this before running any script:**
+> - `<skill_dir>` = the directory that contains this SKILL.md file (e.g. `.agents/skills/project-initializer`). All script paths below are relative to `<skill_dir>`.
+> - `<project_root>` = the root of the project being initialized — pass `.` if you are already inside it, or the absolute path if not. **Never pass a path outside the project the user is working on.**
 
 **File locations:**
 - `README.md` — project root
@@ -97,6 +107,8 @@ Read `assets/templates/README.template.md`. Fill in:
 - `{{SDD_DOCS_PATH}}` — where SDD documents live (see framework reference)
 - `{{GETTING_STARTED_STEPS}}` — installation and run steps appropriate for the tech stack
 
+**Language**: Generate this file in the language chosen in Phase 1 (default: Chinese/中文).
+
 ### AGENTS.md
 
 Read `assets/templates/AGENTS.template.md`. Fill in:
@@ -116,6 +128,8 @@ Read `assets/templates/AGENTS.template.md`. Fill in:
 - `{{CODING_STANDARDS_SUMMARY}}` — see Coding Standards Composition section above
 - `{{INITIALIZED_DATE}}` — today's date in `YYYY-MM-DD` format
 - `{{MAIN_BRANCH}}` — release branch name
+
+**Language**: Generate this file in the language chosen in Phase 1 (default: Chinese/中文).
 
 **Important**: AGENTS.md is a living document. Keep it minimal at creation time. Agents should append to it during development but never remove existing entries. The initial version is just the skeleton — it will grow.
 
@@ -149,9 +163,9 @@ Read `assets/templates/gitlab-ci.template.yml`. Fill in:
 
 Run the install script to copy all required check scripts into the project:
 
-    python assets/install_scripts.py <project_root> --framework <fw>
+    python <skill_dir>/scripts/install_scripts.py <project_root> --framework <fw>
 
-This installs all three runtime variants (`.sh`, `.ps1`, `.js`) of `check_project_tag` and `check_sdd_<framework>` into `<project_root>/scripts/`. **Do not manually recreate or copy-paste script files** — the install script guarantees the exact asset versions are used without modification. Pass `--dry-run` first to verify what will be copied.
+This installs the appropriate runtime variant (`.sh` on Linux/macOS, `.js` as fallback, `.ps1` on Windows) of `check_project_tag` and `check_sdd_<framework>` into `<project_root>/scripts/`. **Do not manually recreate or copy-paste script files** — the install script guarantees the exact asset versions are used without modification. Pass `--dry-run` first to verify what will be copied.
 
 ### .github/workflows/ci.yml (if GitHub Actions selected)
 
@@ -161,18 +175,30 @@ Read `assets/templates/github-actions.template.yml`. Fill in the same placeholde
 
 ## Phase 3: SDD Framework Installation
 
-After generating files, install the SDD framework tools and initialize the project structure for the chosen framework.
+> **MANDATORY — do not skip or substitute manually.**
+> You MUST run the script below. Do NOT create SDD framework directories or documents by hand. Manually created files will be incomplete, wrongly structured, and will fail CI checks. If the script encounters an error, report it to the user — do not work around it by creating files yourself.
 
-    python assets/initialize_sdd.py <project_root> --framework <fw> [--ai-provider claude]
+Resolve `<skill_dir>` (the directory containing this SKILL.md) and run:
 
-This script:
-- Installs the framework CLI tool (`npm`, `uv`, or `npx` as appropriate)
+    python <skill_dir>/scripts/initialize_sdd.py <project_root> --framework <fw> --ai-provider <agent>
+
+If you are already inside the project directory, `<project_root>` is `.`.
+
+**Determining the `--ai-provider` value:** Use the name of the AI agent currently running this skill (e.g. `claude`, `copilot`, `gemini`, `opencode`, `codex`). You know this from your own identity — pass it as-is.
+
+This script runs all frameworks **non-interactively**:
+- **OpenSpec**: `openspec init --tools <tool_id>` — `--ai-provider` mapped to OpenSpec's tool ID: `claude`, `opencode`, `codex`, `gemini`, `windsurf`, `qwen`, `codebuddy`, `kilocode` use the same name; `copilot`→`github-copilot`; `cursor-agent`→`cursor`; `roo`→`roocode`; all others→`all`
+- **SpecKit**: `specify init . --ai <provider>` — passes the provider name directly
+- **GSD**: `npx -y get-shit-done-cc@latest --<runtime> --local` — `--ai-provider` is mapped to a runtime flag: `claude`→`--claude`, `opencode`→`--opencode`, `codex`→`--codex`, all others→`--claude`
+
+The script also:
+- Installs the framework CLI tool (`npm`, `uv`, or `npx` as appropriate) if not found
 - Initializes framework-specific directories
 - For **OpenSpec**: initializes `openspec/specs/` and `openspec/changes/`
 - For **SpecKit**: initializes `specs/` (auto-numbered) and `memory/constitution.md`
 - For **GSD**: initializes `.planning/` with PROJECT.md, REQUIREMENTS.md, ROADMAP.md, STATE.md, config.json
 
-Use `--ai-provider` (SpecKit only) to set the AI model (default: `claude`). Supported: claude, gemini, copilot, cursor-agent, windsurf, opencode, codex, qwen, amp, shai, agy, bob, qodercli, roo, codebuddy, jules, kilocode, generic.
+SpecKit `--ai-provider` supported values: claude, gemini, copilot, cursor-agent, windsurf, opencode, codex, qwen, amp, shai, agy, bob, qodercli, roo, codebuddy, jules, kilocode, generic.
 
 Pass `--dry-run` to preview without installing.
 
@@ -245,7 +271,7 @@ Rules:
 - `ci_platforms` — comma-separated, no spaces: `gitlab`, `github`, or `gitlab,github`
 - Do not modify this block after creation except through a deliberate re-initialization
 
-The CI check script (`scripts/check_project_tag.sh`) reads this tag and exits non-zero if it is missing or malformed. It is installed automatically by the `install_scripts.py` step described in Phase 2 — `check_project_tag` is always included regardless of the chosen SDD framework. The framework's initialize script (Phase 3) must complete successfully before this tag is validated.
+The CI check script (`assets/scripts/check_project_tag.sh`) reads this tag and exits non-zero if it is missing or malformed. It is installed automatically by the `install_scripts.py` step described in Phase 2 — `check_project_tag` is always included regardless of the chosen SDD framework. The framework's initialize script (Phase 3) must complete successfully before this tag is validated.
 
 ---
 
@@ -267,8 +293,8 @@ After generating all files, perform this checklist:
   - OpenSpec: `openspec/specs/` and `openspec/changes/` exist
   - SpecKit: `specs/` and `memory/constitution.md` exist
   - GSD: `.planning/` contains PROJECT.md, REQUIREMENTS.md, ROADMAP.md, STATE.md, config.json
-- [ ] `scripts/` directory was populated via `install_scripts.py` (not manually recreated)
-- [ ] All three script variants (`.sh`, `.ps1`, `.js`) are present in `scripts/`
+- [ ] `scripts/` directory was populated by running `install_scripts.py` (not manually recreated or copy-pasted)
+- [ ] The correct single variant (`.sh` on Linux/macOS, `.ps1` on Windows, `.js` as fallback) is present in `scripts/`
 - [ ] `.gitlab-ci.yml` (if generated) contains **all** required jobs: `lint`, `unit-tests`, `commit-format`, `full-test-suite`, `coverage-gate`, `security-scan`, `project-tag-check`, `sdd-process-check`, `deploy`
 - [ ] `.github/workflows/ci.yml` (if generated) contains **all** required jobs: `lint`, `unit-tests`, `commit-format`, `full-test-suite`, `security-scan`, `project-tag-check`, `sdd-process-check`
 - [ ] No jobs were removed or merged compared to the template; only `{{PLACEHOLDER}}` tokens were substituted
@@ -287,17 +313,19 @@ Report any inconsistencies to the user before finishing.
 
 ## Installation scripts
 
-- `assets/install_scripts.py` — copies all required check scripts into `<project_root>/scripts/`
+All script paths are relative to `<skill_dir>` (the directory containing this SKILL.md). `<project_root>` is the project's root — use `.` if already inside it.
 
-  Usage: `python assets/install_scripts.py <project_root> --framework <openspec|speckit|gsd>`
+- `scripts/install_scripts.py` — copies check scripts into `<project_root>/scripts/`
+
+  Usage: `python <skill_dir>/scripts/install_scripts.py <project_root> --framework <openspec|speckit|gsd>`
 
   Always run this instead of manually copying scripts. Add `--dry-run` to preview.
 
-- `assets/initialize_sdd.py` — installs SDD framework tools and initializes project structure
+- `scripts/initialize_sdd.py` — installs SDD framework tools and initializes project structure
 
-  Usage: `python assets/initialize_sdd.py <project_root> --framework <openspec|speckit|gsd> [--ai-provider claude]`
+  Usage: `python <skill_dir>/scripts/initialize_sdd.py <project_root> --framework <openspec|speckit|gsd> --ai-provider <agent>`
 
-  Installs the appropriate framework CLI, then sets up directories. For SpecKit, specify the AI provider. Add `--dry-run` to preview.
+  **Must be run — do not manually create SDD directories.** Installs the framework CLI non-interactively, sets up directories. Add `--dry-run` to preview.
 
 ## Template files
 
@@ -308,7 +336,7 @@ Report any inconsistencies to the user before finishing.
 
 ## Check scripts
 
-Each check is available in three runtime variants. Copy **all three variants** of each script into the project's `scripts/` directory — which one gets invoked in CI depends on the runner OS and what's available.
+Each check is available in three runtime variants, stored in the skill's `assets/scripts/` directory. The install_scripts.py command copies these into the target project's `scripts/` directory — which variant gets invoked in CI depends on the runner OS and what's available.
 
 | Script | Shell (Linux/macOS) | PowerShell (Windows/cross-platform) | Node.js (any platform) |
 |--------|--------------------|------------------------------------|------------------------|

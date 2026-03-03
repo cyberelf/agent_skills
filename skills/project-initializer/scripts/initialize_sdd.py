@@ -5,7 +5,7 @@ Initialize the SDD framework directories and install required tools for an exist
 
 This script:
 1. Installs the framework CLI tool globally (npm, uv, or npx as appropriate)
-2. Initializes the framework-specific directory structures
+2. Initializes the framework-specific directory structures in a non-interactive way
 3. Validates the result
 
 Usage:
@@ -16,7 +16,16 @@ Arguments:
 
 Options:
     --framework         SDD framework: openspec, speckit, or gsd  [required]
-    --ai-provider       For SpecKit: Claude, Gemini, Copilot, etc (default: claude)
+    --ai-provider       AI agent/provider running this script (default: claude).
+                        Used to select non-interactive initialization flags.
+                        OpenSpec maps to --tools <id>: claude, opencode, codex, gemini,
+                            copilot→github-copilot, cursor-agent→cursor, windsurf, qwen,
+                            roo→roocode, codebuddy, kilocode; all others→all
+                        SpecKit accepts: claude, gemini, copilot, cursor-agent, windsurf,
+                            opencode, codex, qwen, amp, shai, agy, bob, qodercli, roo,
+                            codebuddy, jules, kilocode, generic
+                        GSD maps: claude→--claude, opencode→--opencode, codex→--codex,
+                            all others→--claude (default)
     --dry-run           Print commands without executing them.
 
 Requirements:
@@ -25,8 +34,9 @@ Requirements:
     GSD:       npx and Node.js ≥18
 
 Example:
-    python initialize_sdd.py . --framework gsd
-    python initialize_sdd.py /path/to/project --framework speckit --ai-provider claude --dry-run
+    python initialize_sdd.py . --framework gsd --ai-provider claude
+    python initialize_sdd.py /path/to/project --framework speckit --ai-provider gemini --dry-run
+    python initialize_sdd.py /path/to/project --framework gsd --ai-provider opencode
 """
 
 import argparse
@@ -42,6 +52,29 @@ AI_PROVIDERS = {
         "codex", "qwen", "amp", "shai", "agy", "bob", "qodercli", "roo", "codebuddy",
         "jules", "kilocode", "generic"
     ),
+}
+
+# OpenSpec --tools flag: map provider name to OpenSpec tool ID.
+# Providers not listed here fall back to "all" (installs integrations for every tool).
+OPENSPEC_TOOL_MAP: dict[str, str] = {
+    "claude": "claude",
+    "opencode": "opencode",
+    "codex": "codex",
+    "gemini": "gemini",
+    "copilot": "github-copilot",
+    "cursor-agent": "cursor",
+    "windsurf": "windsurf",
+    "qwen": "qwen",
+    "roo": "roocode",
+    "codebuddy": "codebuddy",
+    "kilocode": "kilocode",
+}
+
+# GSD only supports three named runtimes; all other agents fall back to claude.
+GSD_RUNTIME_MAP: dict[str, str] = {
+    "claude": "claude",
+    "opencode": "opencode",
+    "codex": "codex",
 }
 
 
@@ -129,9 +162,23 @@ def run_command_capture(cmd: list[str], description: str, dry_run: bool) -> tupl
         return False, ""
 
 
-def init_openspec(project_root: Path, dry_run: bool) -> bool:
-    """Initialize OpenSpec: install npm package and run openspec init."""
+def init_openspec(project_root: Path, ai_provider: str, dry_run: bool) -> bool:
+    """Initialize OpenSpec non-interactively via openspec init --tools <tool_id>.
+
+    `openspec init` without flags is interactive (Human-Only per docs).
+    Passing --tools <id> skips all prompts.
+
+    Provider → tool ID mapping:
+      claude, opencode, codex, gemini, windsurf, qwen, codebuddy, kilocode → same name
+      copilot       → github-copilot
+      cursor-agent  → cursor
+      roo           → roocode
+      others        → all  (installs integrations for every supported tool)
+    """
     print("\n=== OpenSpec Initialization ===\n")
+
+    tool_id = OPENSPEC_TOOL_MAP.get(ai_provider, "all")
+    print(f"OpenSpec tool flag: --tools {tool_id} (ai_provider={ai_provider!r})")
 
     # Check if openspec CLI is available
     success, _ = run_command_capture(["openspec", "--version"], "Check OpenSpec CLI", dry_run)
@@ -146,12 +193,16 @@ def init_openspec(project_root: Path, dry_run: bool) -> bool:
             print("ERROR: Failed to install OpenSpec.", file=sys.stderr)
             return False
 
-    # Run openspec init in project root
+    # Run openspec init non-interactively in project root
     orig_cwd = Path.cwd()
     try:
         import os
         os.chdir(project_root)
-        if not run_command(["openspec", "init"], "Initialize OpenSpec directories", dry_run):
+        if not run_command(
+            ["openspec", "init", "--tools", tool_id],
+            f"Initialize OpenSpec (tools: {tool_id}, non-interactive)",
+            dry_run,
+        ):
             print("ERROR: OpenSpec initialization failed.", file=sys.stderr)
             return False
     finally:
@@ -213,25 +264,35 @@ def init_speckit(project_root: Path, ai_provider: str, dry_run: bool) -> bool:
     return True
 
 
-def init_gsd(project_root: Path, dry_run: bool) -> bool:
-    """Initialize GSD: run npx get-shit-done-cc or create basic .planning/ structure."""
+def init_gsd(project_root: Path, ai_provider: str, dry_run: bool) -> bool:
+    """Initialize GSD non-interactively via npx get-shit-done-cc@latest.
+
+    Passes the appropriate runtime flag so the tool never prompts interactively:
+      claude   → --claude
+      opencode → --opencode
+      codex    → --codex
+      others   → --claude  (safe default)
+    """
     print("\n=== GSD Initialization ===\n")
 
-    # Try npx first (cloud variant); fall back to local structures
+    runtime = GSD_RUNTIME_MAP.get(ai_provider, "claude")
+    print(f"GSD runtime flag: --{runtime} (ai_provider={ai_provider!r})")
+
+    # Run non-interactively: --<runtime> selects the agent, --local installs into
+    # the current project directory rather than globally.
     orig_cwd = Path.cwd()
     try:
         import os
         os.chdir(project_root)
 
-        # Try npx cloud variant
         success = run_command(
-            ["npx", "-y", "get-shit-done-cc@latest"],
-            "Initialize GSD (cloud mode)",
+            ["npx", "-y", "get-shit-done-cc@latest", f"--{runtime}", "--local"],
+            f"Initialize GSD (runtime: {runtime}, non-interactive, local)",
             dry_run,
         )
 
         if not success:
-            print("\nCloud initialization not available. Creating base .planning/ structure...\n")
+            print("\nnpx initialization failed. Creating base .planning/ structure...\n")
             if not dry_run:
                 create_gsd_structure(project_root)
     finally:
@@ -318,8 +379,7 @@ def main() -> None:
 
     print(f"Project root : {project_root}")
     print(f"Framework    : {args.framework}")
-    if args.framework == "speckit":
-        print(f"AI provider  : {args.ai_provider}")
+    print(f"AI provider  : {args.ai_provider}")
     if args.dry_run:
         print("Mode         : dry-run\n")
     else:
@@ -328,11 +388,11 @@ def main() -> None:
     # Dispatch to framework-specific initializer
     success = False
     if args.framework == "openspec":
-        success = init_openspec(project_root, args.dry_run)
+        success = init_openspec(project_root, args.ai_provider, args.dry_run)
     elif args.framework == "speckit":
         success = init_speckit(project_root, args.ai_provider, args.dry_run)
     elif args.framework == "gsd":
-        success = init_gsd(project_root, args.dry_run)
+        success = init_gsd(project_root, args.ai_provider, args.dry_run)
 
     if not success:
         print("\n❌ Initialization failed.", file=sys.stderr)
