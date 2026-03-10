@@ -46,14 +46,21 @@ pip install yfinance
 polymarket-analyzer/
 ├── SKILL.md
 ├── references/
-│   ├── china_stock_mapping.json   # 21 China concept stocks → A-share sector/ticker mapping
-│   └── signal_weights.json        # Configurable source weights for composite analyzer
+│   ├── china_stock_mapping.json        # 21 China concept stocks → A-share sector/ticker mapping
+│   ├── signal_weights.json             # Configurable source weights for composite analyzer
+│   ├── workflows/
+│   │   ├── scenario-1-macro-geopolitical.md  # Top-down macro & geopolitical risk workflow
+│   │   ├── scenario-2-sector-catalyst.md     # Bottom-up sector/company catalyst workflow
+│   │   └── scenario-3-daily-pulse.md         # Fast daily digest / delta-only briefing
+│   └── templates/
+│       ├── comprehensive-insight-report.md   # Full deep-dive report template (Scenarios 1 & 2)
+│       └── quick-brief.md                    # 30-second pulse template (Scenario 3)
 └── scripts/
     ├── polymarket_analyzer.py     # Full 7-source composite analyzer
-    ├── query-markets.sh           # Raw Polymarket search by keyword
-    ├── filter-markets.sh          # Raw Polymarket filter by keyword/volume/status
-    ├── fetch-market-data.sh       # Raw price/volume for China proxy instruments
-    └── fetch-cn-news.sh           # Raw headlines from Chinese domestic + global sources
+    ├── query-markets.py           # Polymarket search — active markets only by default
+    ├── filter-markets.py          # Polymarket multi-filter — active markets only by default
+    ├── fetch-market-data.py       # Raw price/volume for China proxy instruments
+    └── fetch-cn-news.py           # Raw headlines from Chinese domestic + global sources
 ```
 
 ---
@@ -61,12 +68,12 @@ polymarket-analyzer/
 ## Information Channels
 
 ### Channel 1 — Polymarket Prediction Markets
-**Scripts**: `scripts/query-markets.sh`, `scripts/filter-markets.sh`
+**Scripts**: `scripts/query-markets.py`, `scripts/filter-markets.py`
 
 Real-money crowd probabilities on macro, geopolitical, and corporate events. Best for tail risks such as Taiwan conflict, trade war escalation, and rate decisions.
 
 ### Channel 2 — Financial Market Proxies
-**Script**: `scripts/fetch-market-data.sh`
+**Script**: `scripts/fetch-market-data.py`
 
 Raw daily price and volume data for 11 China-sensitive instruments:
 
@@ -85,7 +92,7 @@ Raw daily price and volume data for 11 China-sensitive instruments:
 | UUP | US Dollar Index ETF | USD strength |
 
 ### Channel 3 — Chinese Domestic Financial News
-**Script**: `scripts/fetch-cn-news.sh`
+**Script**: `scripts/fetch-cn-news.py`
 
 Raw headlines from domestic Chinese financial media:
 
@@ -100,7 +107,7 @@ Raw headlines from domestic Chinese financial media:
 | `xinhua_finance` | 新华财经 | State macro/policy announcements |
 
 ### Channel 4 — Global / HK China-Focused News
-**Script**: `scripts/fetch-cn-news.sh` (same script, global sources)
+**Script**: `scripts/fetch-cn-news.py` (same script, global sources)
 
 | Source ID | Name | Coverage |
 |-----------|------|---------|
@@ -120,33 +127,41 @@ Invoked automatically by `scripts/polymarket_analyzer.py`:
 
 ## Scripts Usage
 
-### `scripts/query-markets.sh` — Polymarket raw search
+### `scripts/query-markets.py` — Polymarket raw search
+Returns **active markets only by default**. Use `--all` to include closed/resolved markets.
 ```bash
-./scripts/query-markets.sh "china"
-./scripts/query-markets.sh "taiwan" 100 json
-./scripts/query-markets.sh "byd" 50 json
-./scripts/query-markets.sh "pboc rate" 50 json
+python3 scripts/query-markets.py "china"
+python3 scripts/query-markets.py "taiwan" --limit 100 --format json
+python3 scripts/query-markets.py "byd" --limit 50
+python3 scripts/query-markets.py "pboc rate"
+# Include resolved markets (for historical analysis only):
+python3 scripts/query-markets.py "taiwan" --limit 100 --format json --all
 ```
 
-### `scripts/filter-markets.sh` — Polymarket multi-filter
+### `scripts/filter-markets.py` — Polymarket multi-filter
+Defaults to `--status active`. Use `--status closed` or `--status all` to override.
 ```bash
-./scripts/filter-markets.sh keywords:taiwan,invasion volume:100000
-./scripts/filter-markets.sh keywords:byd,nio,xpeng,alibaba,tencent
-./scripts/filter-markets.sh status:active volume:50000 output:json
+python3 scripts/filter-markets.py --keywords taiwan,invasion --volume 100000
+python3 scripts/filter-markets.py --keywords byd,nio,xpeng,alibaba,tencent
+python3 scripts/filter-markets.py --status active --volume 50000 --format json
+# Closed markets (historical reference only):
+python3 scripts/filter-markets.py --keywords taiwan --status closed --format json
 ```
 
-### `scripts/fetch-market-data.sh` — Market proxy raw data
+### `scripts/fetch-market-data.py` — Market proxy raw data
 ```bash
-./scripts/fetch-market-data.sh --json
-./scripts/fetch-market-data.sh --period 30d
-./scripts/fetch-market-data.sh --tickers "FXI KWEB ^VIX"
+python3 scripts/fetch-market-data.py
+python3 scripts/fetch-market-data.py --format json
+python3 scripts/fetch-market-data.py --period 30d
+python3 scripts/fetch-market-data.py --tickers "FXI KWEB ^VIX"
 ```
 
-### `scripts/fetch-cn-news.sh` — China news raw headlines
+### `scripts/fetch-cn-news.py` — China news raw headlines
 ```bash
-./scripts/fetch-cn-news.sh --json --limit 20
-./scripts/fetch-cn-news.sh --source caixin --limit 30
-./scripts/fetch-cn-news.sh --source eastmoney
+python3 scripts/fetch-cn-news.py
+python3 scripts/fetch-cn-news.py --format json --limit 20
+python3 scripts/fetch-cn-news.py --source caixin --limit 30
+python3 scripts/fetch-cn-news.py --source caixin,scmp
 ```
 
 ### `scripts/polymarket_analyzer.py` — Full composite run
@@ -158,37 +173,45 @@ Channels unavailable at runtime degrade gracefully with no crash.
 
 ---
 
-## Analysis Workflow
+## Analysis Workflows & Scenarios
 
-To produce a China market sentiment assessment, follow these steps:
+Three scenario-specific workflows are defined in `references/workflows/`. Each workflow applies **First Principles Thinking** — defining a hypothesis first, then fetching only the data needed to test it.
 
-### Step 1 — Collect Polymarket signals
-```bash
-./scripts/query-markets.sh "taiwan" 50 json
-./scripts/query-markets.sh "china usa tariff" 100 json
-./scripts/query-markets.sh "pboc" 50 json
-./scripts/query-markets.sh "byd" 50 json
-```
+| Scenario | File | Use When |
+|----------|------|-----------|
+| 1. Macro & Geopolitical Risk (Top-Down) | `references/workflows/scenario-1-macro-geopolitical.md` | Taiwan, tariffs, PBOC, elections, USD/CNY stress |
+| 2. Sector-Specific Catalyst (Bottom-Up) | `references/workflows/scenario-2-sector-catalyst.md` | EVs, Semiconductors, Property, Internet, specific companies |
+| 3. Daily Market Pulse / Fast Digest | `references/workflows/scenario-3-daily-pulse.md` | Pre-market briefing, end-of-day delta check |
 
-### Step 2 — Collect market proxy data
-```bash
-./scripts/fetch-market-data.sh --json
-```
-Note FXI/KWEB 5D trend, CNY direction, VIX level, Copper momentum.
+### Core Analytical Principles (applied in all scenarios)
+1. **Liquidity Weighting**: Polymarket odds mean nothing without volume. Verify pool size. A 90% probability with $500 volume is noise; with $5M volume, it's a signal.
+2. **Divergence Detection**: The most profitable insights stem from *discrepancies* between explicit prediction market odds and implicit market proxy pricing.
+3. **Probability Momentum**: Focus on the *delta* (change over time). A contract moving from 10% to 30% in two days is highly actionable.
+4. **Active Markets Only (Data Collection)**: Scripts default to active-only. Never treat a closed/resolved contract as a current signal.
+5. **Historical Context (Mandatory)**: Always compare the current PM probability against: (a) the trend of the last 7–30 days for this specific contract, and (b) how analogous resolved contracts priced and resolved historically. A probability without a trend is not a signal — it is a datapoint. Use `--all` to retrieve resolved contracts for comparison.
+6. **Conflict-First Analysis**: When any two sources disagree, the conflict itself is the most important finding in the report. Explain the conflict and its likely cause before forming any directional thesis. A thesis built by ignoring a conflict is not a thesis — it is wishful reasoning.
+7. **Multi-Source Minimum**: A directional conclusion requires ≥2 independent channels in agreement. Single-source signals must be labeled "Unconfirmed — Watch Only." State explicitly which channels confirm and which dissent.
 
-### Step 3 — Collect news headlines
-```bash
-./scripts/fetch-cn-news.sh --json --limit 20
-```
-Key themes: PBOC signals, trade policy, regulatory actions, property market, geopolitical shifts.
+## Accumulated Experience
 
-### Step 4 — Synthesise judgment (agent task)
-After collecting all raw data:
-1. Identify where multiple channels agree directionally
-2. Flag diverging channels as uncertainty areas
-3. Load `references/china_stock_mapping.json` to map signals to A-share sectors and tickers
-4. Distinguish near-term signals (Polymarket) from structural signals (macro)
-5. Produce a recommendation with explicit per-source rationale
+Before running any analysis, check `EXPERIENCE.md` for relevant prior observations:
+- Source reliability notes calibrated from past sessions
+- Known false signal patterns (e.g., sectors where PM historically misprices)
+- Conflict resolution examples from past analyses
+- User feedback on conviction thresholds
+
+After the user provides feedback on analysis quality or outcome accuracy, append a new entry to `EXPERIENCE.md` using the format defined in that file.
+
+---
+
+## Standardized Output Templates
+
+Two templates are defined in `references/templates/`. **Always** use the appropriate template when generating a response.
+
+| Template | File | Use When |
+|----------|------|-----------|
+| A: Comprehensive Investment Insight Report | `references/templates/comprehensive-insight-report.md` | Full analysis from Scenario 1 or 2; includes confidence score, proxy confirmation table, source attribution, and data provenance |
+| B: Quick Brief | `references/templates/quick-brief.md` | Daily pulse (Scenario 3) or when user needs a rapid digest; ALERT / WATCH / No-Change triage format |
 
 ---
 
@@ -230,6 +253,6 @@ Configurable source weights for the composite analyzer. Four profiles:
 export PATH="$PATH:$HOME/.cargo/bin:$HOME/.local/bin"
 ```
 
-**yfinance not installed** — `fetch-market-data.sh` will print an error and exit cleanly; all other channels still work.
+**yfinance not installed** — `fetch-market-data.py` will print an error and exit cleanly; all other channels still work.
 
 **Chinese news sources unreachable** — Some domestic RSS feeds block non-CN IPs. Use a HK/mainland proxy, or focus on: `caixin`, `reuters_china`, `scmp`, `xinhua_en`.

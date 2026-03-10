@@ -49,3 +49,8 @@ Thumbs.db
 *.tmp
 .cache/
 
+# Accumulated experience logs (local-only, not committed)
+**/EXPERIENCE.md
+
+# Testing environments
+.test/
