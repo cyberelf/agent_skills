@@ -1,11 +1,11 @@
 ---
-name: chat-analyzer
+name: spec-story-chat-analyzer
 description: >
   Analyze SpecStory chat history exports to identify workflow patterns,
   inefficiencies, and produce actionable suggestions for improving AGENTS.md,
-  constitution files, and any spec/constraint documents. Uses a companion CLI
-  script (chat_analyze.py) to navigate large files efficiently without reading
-  them whole — essential for keeping context size manageable.
+  constitution files, and any spec/constraint documents. This skill bundles a
+  companion CLI script (chat_analyze.py) so it can navigate large files without
+  reading them whole.
 ---
 
 # Chat Analyzer Skill
@@ -22,8 +22,12 @@ the file, then drill into specific areas with targeted reads.
 
 ## CLI Reference
 
-The CLI lives at `<chat_ana_dir>/chat_analyze.py`.  All commands accept a
-file path or default to the first `.md` in `./data/`.
+The CLI is bundled with this skill as `chat_analyze.py` in the same directory
+as `SKILL.md`. All commands accept a file path or default to the first `.md`
+in `./data/`.
+
+If you need the absolute path to the bundled script, use the skill directory
+that contains this `SKILL.md` and run `python3 <skill_dir>/chat_analyze.py`.
 
 ```
 python3 chat_analyze.py <command> [FILE] [OPTIONS]
@@ -61,10 +65,18 @@ python3 chat_analyze.py const  /path/to/project
 python3 chat_analyze.py suggest data/history.md
 ```
 
-For exact line ranges use the shell directly:
-```bash
-sed -n '9585,9700p' data/history.md
-```
+### Analyst checklist
+
+Use this checklist while applying the skill:
+
+1. Run `stats` and `toc` before any deep reads.
+2. Confirm whether the user wants diagnosis, process guidance, instruction edits, or session-by-session review.
+3. Identify the longest or most scope-drifting sessions first.
+4. Use `show` to inspect the opening user request of each target session.
+5. Use `grep` for restart loops, deployment pivots, secrets, and other risk keywords.
+6. Use `tools` to judge whether read/write/shell usage is imbalanced.
+7. Write findings first, then remediation, and only then any process guidance.
+
 
 ## Analysis Methodology
 
@@ -195,6 +207,6 @@ When reporting analysis results, use this structure:
 ## Important Notes
 
 - **Never read the full chat file** if it's >5000 lines — always navigate with the CLI first
-- The CLI companion script must exist at `<project>/chat_analyze.py` — if missing, instructions for creating it are at `<chat_ana_dir>/chat_analyze.py`
+- The CLI companion script is bundled with this skill as `chat_analyze.py`
 - For cross-file analysis (comparing two chat histories), run `stats` and `suggest` on each and diff the output
 - The CLI uses `python3` — ensure it's available in the shell before running
