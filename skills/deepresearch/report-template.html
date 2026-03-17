@@ -6,11 +6,23 @@
   {{PLACEHOLDER}} markers. Do not change the CSS or JS unless instructed.
 
   PLACEHOLDERS:
-    {{TITLE}}          — short report title, e.g. "Endpoint LLM Ecosystem — Trends & Forecast 2026"
+    {{TITLE_EN}}       — English title, e.g. "Endpoint LLM Ecosystem — Trends & Forecast 2026"
+    {{TITLE_ZH}}       — Chinese title, e.g. "端侧大模型生态系统 — 技术趋势与预测 2026"
     {{META_*}}         — metadata fields (type, date, parts description, research method)
     {{TOC_*}}          — sidebar table of contents links (copy/modify the sample structure)
     {{EXEC_SUMMARY}}   — executive summary content
     {{PART_N_*}}       — per-part content blocks
+
+  BILINGUAL LAYOUT:
+    Every content section uses:
+      <div class="bilingual">
+        <div class="lang-en"> ... English content ... </div>
+        <div class="lang-zh"> ... 中文内容 ... </div>
+      </div>
+    Section headers use:
+      <h2><span class="lang-en">English Title</span><span class="lang-zh">中文标题</span></h2>
+    Navbar has three buttons: "Both / 双语" (default), "English", "中文"
+    On mobile (<600px) defaults to English-only.
 
   CALLOUT VARIANTS:
     <div class="callout">          blue — key findings, notes
@@ -19,11 +31,11 @@
     <div class="callout-orange">   orange — caveats, mixed findings
 
   BADGE VARIANTS (inline status labels):
-    <span class="badge badge-green">Confirmed</span>
-    <span class="badge badge-blue">Probable</span>
-    <span class="badge badge-orange">Extrapolation</span>
-    <span class="badge badge-gray">Speculative</span>
-    <span class="badge badge-red">Critical</span>
+    <span class="badge badge-green">Confirmed / 已确认</span>
+    <span class="badge badge-blue">Probable / 较大可能</span>
+    <span class="badge badge-orange">Extrapolation / 趋势外推</span>
+    <span class="badge badge-gray">Speculative / 推测性</span>
+    <span class="badge badge-red">Critical / 严重</span>
 
   TABLE PATTERN:
     <div class="table-wrap">
@@ -33,29 +45,28 @@
       </table>
     </div>
 
-  COLLAPSIBLE SECTION PATTERN:
+  COLLAPSIBLE SECTION PATTERN (with bilingual header):
     <div id="partN" class="section-anchor">
       <div class="part-header" onclick="togglePart('partN')">
-        <h2>Part N: Title</h2>
+        <h2>
+          <span class="lang-en">Part N: English Title</span>
+          <span class="lang-zh">第N部分：中文标题</span>
+        </h2>
         <span class="collapse-icon">&#9662;</span>
       </div>
       <div class="part-content" id="partN-content">
-        ... content ...
+        <div class="bilingual">
+          <div class="lang-en"> ... English content ... </div>
+          <div class="lang-zh"> ... 中文内容 ... </div>
+        </div>
       </div>
     </div>
-
-  BILINGUAL LAYOUT (optional, for bilingual reports):
-    <div class="bilingual">
-      <div class="lang-en"> ... English content ... </div>
-      <div class="lang-zh"> ... 中文内容 ... </div>
-    </div>
-    Add lang switcher buttons to navbar (see openclaw/report.html for reference).
 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{TITLE}}</title>
+<title>{{TITLE_EN}} / {{TITLE_ZH}}</title>
 <style>
   :root {
     --bg: #0d1117;
@@ -89,7 +100,7 @@
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
     line-height: 1.7;
     min-height: 100vh;
   }
@@ -107,7 +118,6 @@
     font-size: 0.95rem; color: var(--accent); font-weight: 600;
     flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  /* Optional bilingual lang buttons — uncomment if needed
   .lang-btn {
     padding: 6px 16px; border-radius: 6px; border: 1px solid var(--border);
     cursor: pointer; font-size: 0.85rem; font-weight: 500;
@@ -115,7 +125,6 @@
   }
   .lang-btn.active { background: var(--accent); color: #0d1117; border-color: var(--accent); }
   .lang-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
-  */
   #sidebar-toggle {
     display: none; background: none; border: 1px solid var(--border);
     color: var(--text); padding: 6px 10px; border-radius: 6px; cursor: pointer;
@@ -167,7 +176,7 @@
   .meta-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); }
   .meta-value { font-size: 0.9rem; color: var(--accent2); font-weight: 600; }
 
-  /* BILINGUAL LAYOUT (optional) */
+  /* BILINGUAL LAYOUT */
   .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
   .bilingual > * { min-width: 0; }
 
@@ -278,6 +287,13 @@
   /* SECTION ANCHOR */
   .section-anchor { scroll-margin-top: calc(var(--navbar-h) + 20px); }
 
+  /* LANG LABEL (inline tag) */
+  .lang-label {
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--text-muted); border: 1px solid var(--border); border-radius: 4px;
+    padding: 2px 6px; margin-left: 8px; vertical-align: middle;
+  }
+
   /* INFO BOX */
   .info-box {
     background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
@@ -286,7 +302,9 @@
   .info-box strong { color: var(--accent); }
 
   /* RESPONSIVE */
-  @media (max-width: 1100px) { .bilingual { grid-template-columns: 1fr; } }
+  @media (max-width: 1100px) {
+    .bilingual { grid-template-columns: 1fr; }
+  }
   @media (max-width: 900px) {
     #sidebar { transform: translateX(-100%); transition: transform 0.3s; z-index: 900; }
     #sidebar.open { transform: translateX(0); }
@@ -307,53 +325,51 @@
 <!-- NAVBAR -->
 <nav id="navbar">
   <button id="sidebar-toggle" onclick="toggleSidebar()">&#9776;</button>
-  <h1>{{TITLE}}</h1>
-  <!-- Bilingual buttons (optional — uncomment and add setLang() JS if needed):
+  <h1>{{TITLE_EN}} &nbsp;/&nbsp; {{TITLE_ZH}}</h1>
   <button class="lang-btn active" id="btn-both" onclick="setLang('both')">Both / 双语</button>
   <button class="lang-btn" id="btn-en" onclick="setLang('en')">English</button>
   <button class="lang-btn" id="btn-zh" onclick="setLang('zh')">中文</button>
-  -->
 </nav>
 
 <!-- SIDEBAR -->
 <aside id="sidebar">
-  <h2>Table of Contents</h2>
+  <h2>Table of Contents / 目录</h2>
 
   <div class="toc-section">
-    <a class="toc-part" href="#meta">Report Info</a>
-    <a class="toc-part" href="#exec-summary">Executive Summary</a>
+    <a class="toc-part" href="#meta">Report Info / 报告信息</a>
+    <a class="toc-part" href="#exec-summary">Executive Summary / 执行摘要</a>
   </div>
   <hr class="toc-divider">
 
   <!-- REPLACE with actual TOC for this report: -->
   <div class="toc-section">
-    <a class="toc-part" href="#part1">Part 1: {{PART1_TITLE}}</a>
+    <a class="toc-part" href="#part1">Part 1: {{PART1_TITLE_EN}} / {{PART1_TITLE_ZH}}</a>
     <a class="toc-sub" href="#p1-s1">{{PART1_SECTION1}}</a>
     <a class="toc-sub" href="#p1-s2">{{PART1_SECTION2}}</a>
   </div>
   <hr class="toc-divider">
 
   <div class="toc-section">
-    <a class="toc-part" href="#part2">Part 2: {{PART2_TITLE}}</a>
+    <a class="toc-part" href="#part2">Part 2: {{PART2_TITLE_EN}} / {{PART2_TITLE_ZH}}</a>
     <a class="toc-sub" href="#p2-s1">{{PART2_SECTION1}}</a>
     <a class="toc-sub" href="#p2-s2">{{PART2_SECTION2}}</a>
   </div>
   <hr class="toc-divider">
 
   <div class="toc-section">
-    <a class="toc-part" href="#part3">Part 3: {{PART3_TITLE}}</a>
+    <a class="toc-part" href="#part3">Part 3: {{PART3_TITLE_EN}} / {{PART3_TITLE_ZH}}</a>
     <a class="toc-sub" href="#p3-s1">{{PART3_SECTION1}}</a>
   </div>
   <hr class="toc-divider">
 
   <div class="toc-section">
-    <a class="toc-part" href="#part4">Part 4: {{PART4_TITLE}}</a>
+    <a class="toc-part" href="#part4">Part 4: {{PART4_TITLE_EN}} / {{PART4_TITLE_ZH}}</a>
     <a class="toc-sub" href="#p4-s1">{{PART4_SECTION1}}</a>
   </div>
   <hr class="toc-divider">
 
   <div class="toc-section">
-    <a class="toc-part" href="#part5">Part 5: {{PART5_TITLE}}</a>
+    <a class="toc-part" href="#part5">Part 5: {{PART5_TITLE_EN}} / {{PART5_TITLE_ZH}}</a>
     <a class="toc-sub" href="#p5-s1">{{PART5_SECTION1}}</a>
   </div>
 </aside>
@@ -365,23 +381,23 @@
   <div id="meta" class="section-anchor">
     <div class="meta-header">
       <div class="meta-item">
-        <span class="meta-label">Type</span>
+        <span class="meta-label">Type / 类型</span>
         <span class="meta-value">{{META_TYPE}}</span>
-        <!-- e.g. "Security Research" or "Tech Trend Research" -->
+        <!-- e.g. "Security Research" or "Tech Trend Research / 技术趋势研究" -->
       </div>
       <div class="meta-item">
-        <span class="meta-label">Date</span>
+        <span class="meta-label">Date / 日期</span>
         <span class="meta-value">{{META_DATE}}</span>
       </div>
       <div class="meta-item">
-        <span class="meta-label">Parts</span>
+        <span class="meta-label">Coverage / 覆盖范围</span>
         <span class="meta-value">{{META_PARTS}}</span>
-        <!-- e.g. "5 (Hardware · Models · Runtimes · Applications · Forecast)" -->
+        <!-- e.g. "6 parts · Hardware · Models · Runtimes · Applications · Forecast · Edge Devices" -->
       </div>
       <div class="meta-item">
-        <span class="meta-label">Research</span>
+        <span class="meta-label">Research / 研究方法</span>
         <span class="meta-value">{{META_METHOD}}</span>
-        <!-- e.g. "5 parallel agents · ~30,000 words · primary sources" -->
+        <!-- e.g. "6 parallel agents · ~36,000 words · primary sources" -->
       </div>
     </div>
   </div>
@@ -389,38 +405,66 @@
   <!-- EXECUTIVE SUMMARY -->
   <div id="exec-summary" class="section-anchor">
     <div class="part-header" onclick="togglePart('exec')">
-      <h2>Executive Summary</h2>
+      <h2>
+        <span class="lang-en">Executive Summary</span>
+        <span class="lang-zh">执行摘要</span>
+      </h2>
       <span class="collapse-icon">&#9662;</span>
     </div>
     <div class="part-content" id="exec-content">
-
-      <p>{{EXEC_INTRO}}</p>
-
-      <div class="callout">
-        <h3>Key Findings</h3>
-        <ul>
-          <li>{{FINDING_1}}</li>
-          <li>{{FINDING_2}}</li>
-          <li>{{FINDING_3}}</li>
-          <li>{{FINDING_4}}</li>
-          <li>{{FINDING_5}}</li>
-        </ul>
+      <div class="bilingual">
+        <div class="lang-en">
+          <p>{{EXEC_INTRO_EN}}</p>
+          <div class="callout">
+            <h3>Key Findings</h3>
+            <ul>
+              <li>{{FINDING_1_EN}}</li>
+              <li>{{FINDING_2_EN}}</li>
+              <li>{{FINDING_3_EN}}</li>
+              <li>{{FINDING_4_EN}}</li>
+              <li>{{FINDING_5_EN}}</li>
+            </ul>
+          </div>
+        </div>
+        <div class="lang-zh">
+          <p>{{EXEC_INTRO_ZH}}</p>
+          <div class="callout">
+            <h3>核心发现</h3>
+            <ul>
+              <li>{{FINDING_1_ZH}}</li>
+              <li>{{FINDING_2_ZH}}</li>
+              <li>{{FINDING_3_ZH}}</li>
+              <li>{{FINDING_4_ZH}}</li>
+              <li>{{FINDING_5_ZH}}</li>
+            </ul>
+          </div>
+        </div>
       </div>
-
     </div>
   </div>
 
   <!-- PART 1 -->
   <div id="part1" class="section-anchor">
     <div class="part-header" onclick="togglePart('part1')">
-      <h2>Part 1: {{PART1_TITLE}}</h2>
+      <h2>
+        <span class="lang-en">Part 1: {{PART1_TITLE_EN}}</span>
+        <span class="lang-zh">第一部分：{{PART1_TITLE_ZH}}</span>
+      </h2>
       <span class="collapse-icon">&#9662;</span>
     </div>
     <div class="part-content" id="part1-content">
 
       <div id="p1-s1" class="section-anchor">
-        <h3>{{PART1_SECTION1}}</h3>
-        <p>{{PART1_S1_CONTENT}}</p>
+        <div class="bilingual">
+          <div class="lang-en">
+            <h3>{{PART1_SECTION1_EN}}</h3>
+            <p>{{PART1_S1_CONTENT_EN}}</p>
+          </div>
+          <div class="lang-zh">
+            <h3>{{PART1_SECTION1_ZH}}</h3>
+            <p>{{PART1_S1_CONTENT_ZH}}</p>
+          </div>
+        </div>
       </div>
 
       <!-- Add more sections as needed -->
@@ -431,56 +475,99 @@
   <!-- PART 2 -->
   <div id="part2" class="section-anchor">
     <div class="part-header" onclick="togglePart('part2')">
-      <h2>Part 2: {{PART2_TITLE}}</h2>
+      <h2>
+        <span class="lang-en">Part 2: {{PART2_TITLE_EN}}</span>
+        <span class="lang-zh">第二部分：{{PART2_TITLE_ZH}}</span>
+      </h2>
       <span class="collapse-icon">&#9662;</span>
     </div>
     <div class="part-content" id="part2-content">
-      <!-- Content -->
+      <div class="bilingual">
+        <div class="lang-en"><!-- EN content --></div>
+        <div class="lang-zh"><!-- 中文内容 --></div>
+      </div>
     </div>
   </div>
 
   <!-- PART 3 -->
   <div id="part3" class="section-anchor">
     <div class="part-header" onclick="togglePart('part3')">
-      <h2>Part 3: {{PART3_TITLE}}</h2>
+      <h2>
+        <span class="lang-en">Part 3: {{PART3_TITLE_EN}}</span>
+        <span class="lang-zh">第三部分：{{PART3_TITLE_ZH}}</span>
+      </h2>
       <span class="collapse-icon">&#9662;</span>
     </div>
     <div class="part-content" id="part3-content">
-      <!-- Content -->
+      <div class="bilingual">
+        <div class="lang-en"><!-- EN content --></div>
+        <div class="lang-zh"><!-- 中文内容 --></div>
+      </div>
     </div>
   </div>
 
   <!-- PART 4 -->
   <div id="part4" class="section-anchor">
     <div class="part-header" onclick="togglePart('part4')">
-      <h2>Part 4: {{PART4_TITLE}}</h2>
+      <h2>
+        <span class="lang-en">Part 4: {{PART4_TITLE_EN}}</span>
+        <span class="lang-zh">第四部分：{{PART4_TITLE_ZH}}</span>
+      </h2>
       <span class="collapse-icon">&#9662;</span>
     </div>
     <div class="part-content" id="part4-content">
-      <!-- Content -->
+      <div class="bilingual">
+        <div class="lang-en"><!-- EN content --></div>
+        <div class="lang-zh"><!-- 中文内容 --></div>
+      </div>
     </div>
   </div>
 
   <!-- PART 5 -->
   <div id="part5" class="section-anchor">
     <div class="part-header" onclick="togglePart('part5')">
-      <h2>Part 5: {{PART5_TITLE}}</h2>
+      <h2>
+        <span class="lang-en">Part 5: {{PART5_TITLE_EN}}</span>
+        <span class="lang-zh">第五部分：{{PART5_TITLE_ZH}}</span>
+      </h2>
       <span class="collapse-icon">&#9662;</span>
     </div>
     <div class="part-content" id="part5-content">
-      <!-- Content -->
+      <div class="bilingual">
+        <div class="lang-en"><!-- EN content --></div>
+        <div class="lang-zh"><!-- 中文内容 --></div>
+      </div>
     </div>
   </div>
 
   <hr style="margin-top:48px;">
-  <p style="font-size:0.78rem; color:var(--text-muted); margin-top:16px; padding-bottom:32px;">
-    {{FOOTER_NOTE}}
-    <!-- e.g. "Research date: YYYY-MM-DD · N parallel research agents · ~N,000 words of primary source research." -->
-  </p>
+  <div class="bilingual" style="margin-top:16px; padding-bottom:32px;">
+    <p style="font-size:0.78rem; color:var(--text-muted);" class="lang-en">{{FOOTER_NOTE_EN}}</p>
+    <p style="font-size:0.78rem; color:var(--text-muted);" class="lang-zh">{{FOOTER_NOTE_ZH}}</p>
+  </div>
 
 </main>
 
 <script>
+  // Language toggle
+  let currentLang = 'both';
+
+  function setLang(lang) {
+    currentLang = lang;
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn-' + lang).classList.add('active');
+
+    document.querySelectorAll('.lang-en').forEach(el => {
+      el.style.display = (lang === 'zh') ? 'none' : '';
+    });
+    document.querySelectorAll('.lang-zh').forEach(el => {
+      el.style.display = (lang === 'en') ? 'none' : '';
+    });
+    document.querySelectorAll('.bilingual').forEach(el => {
+      el.style.gridTemplateColumns = (lang === 'both' && window.innerWidth > 1100) ? '1fr 1fr' : '1fr';
+    });
+  }
+
   // Collapsible sections
   function togglePart(id) {
     const content = document.getElementById(id + '-content');
@@ -499,11 +586,24 @@
     }
   }
 
-  // Initialize max-height for animation
+  // Initialize
   document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.part-content').forEach(el => {
       el.style.maxHeight = el.scrollHeight + 'px';
     });
+    // Default to English on small screens
+    if (window.innerWidth <= 600) {
+      setLang('en');
+    }
+  });
+
+  // Handle resize
+  window.addEventListener('resize', function() {
+    if (currentLang === 'both') {
+      document.querySelectorAll('.bilingual').forEach(el => {
+        el.style.gridTemplateColumns = window.innerWidth > 1100 ? '1fr 1fr' : '1fr';
+      });
+    }
   });
 
   // Mobile sidebar
@@ -532,21 +632,6 @@
       }
     });
   });
-
-  /* Bilingual language switcher (optional — uncomment if using bilingual layout)
-  function setLang(lang) {
-    document.querySelectorAll('.lang-en').forEach(el => {
-      el.style.display = (lang === 'zh') ? 'none' : '';
-    });
-    document.querySelectorAll('.lang-zh').forEach(el => {
-      el.style.display = (lang === 'en') ? 'none' : '';
-    });
-    ['btn-both','btn-en','btn-zh'].forEach(id => {
-      document.getElementById(id).classList.remove('active');
-    });
-    document.getElementById('btn-' + lang).classList.add('active');
-  }
-  */
 </script>
 </body>
 </html>

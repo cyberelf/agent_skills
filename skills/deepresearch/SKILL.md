@@ -92,3 +92,22 @@ Follow the execution steps in the template. The core workflow is the same for bo
 4. **Fixed dimensions** (techtrend mode): Parts 2–4 are defined per-topic in the plan, not preset
 5. **Blocked sources**: Chinese sources behind auth walls — search for equivalent open-web sources
 6. **Context length**: Raw research files can be 5,000–7,000 words each — read them carefully
+
+---
+
+## Example Invocations
+
+```
+# Security (auto-detected)
+/deepresearch security for personal AI endpoint agents including OpenClaw and Claude Code
+/deepresearch supply chain attacks on npm packages
+/deepresearch quantum-safe cryptography for financial services
+
+# Tech trend (auto-detected)
+/deepresearch endpoint LLM ecosystem — hardware, models, runtimes, applications
+/deepresearch autonomous vehicle software stack trends and 2030 forecast
+/deepresearch edge AI chip market landscape
+
+# With HTML output
+/deepresearch endpoint LLM ecosystem output: html
+```
