@@ -7,9 +7,14 @@ A centralized repository for maintaining agent skills and meta-skills for softwa
 
 This repository includes the following skills under the `skills/` directory. Each skill contains a `SKILL.md` describing its purpose and usage.
 
-- [retrospect](skills/retrospect/SKILL.md) - A meta-skill for self-analysis and improvement of agent capabilities.
-- [issue-fixer](skills/issue-fixer/SKILL.md) - A systematic approach for investigating and fixing bugs and issues in the codebase.
-- [openspec-constitution-guard](skills/openspec-constitution-guard/SKILL.md) - A skill to compose project AGENTS.md constitution files into openspec commands to enforce quality validation gates.
+- [brownfield-onboarding](skills/brownfield-onboarding/SKILL.md)
+- [claude-code-pm](skills/claude-code-pm/SKILL.md)
+- [deepresearch](skills/deepresearch/SKILL.md)
+- [issue-fixer](skills/issue-fixer/SKILL.md)
+- [openspec-constitution-guard](skills/openspec-constitution-guard/SKILL.md)
+- [polymarket-analyzer](skills/polymarket-analyzer/SKILL.md)
+- [project-initializer](skills/project-initializer/SKILL.md)
+- [retrospect](skills/retrospect/SKILL.md)
 
 
 ## Installation
