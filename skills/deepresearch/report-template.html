@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<!--
+  deepresearch HTML Report Template
+  ──────────────────────────────────
+  Usage: copy this file to {topic}_{YYYYMM}/report.html, then fill in all
+  {{PLACEHOLDER}} markers. Do not change the CSS or JS unless instructed.
+
+  PLACEHOLDERS:
+    {{TITLE}}          — short report title, e.g. "Endpoint LLM Ecosystem — Trends & Forecast 2026"
+    {{META_*}}         — metadata fields (type, date, parts description, research method)
+    {{TOC_*}}          — sidebar table of contents links (copy/modify the sample structure)
+    {{EXEC_SUMMARY}}   — executive summary content
+    {{PART_N_*}}       — per-part content blocks
+
+  CALLOUT VARIANTS:
+    <div class="callout">          blue — key findings, notes
+    <div class="callout-green">    green — milestones, positive findings
+    <div class="callout-red">      red — warnings, critical gaps
+    <div class="callout-orange">   orange — caveats, mixed findings
+
+  BADGE VARIANTS (inline status labels):
+    <span class="badge badge-green">Confirmed</span>
+    <span class="badge badge-blue">Probable</span>
+    <span class="badge badge-orange">Extrapolation</span>
+    <span class="badge badge-gray">Speculative</span>
+    <span class="badge badge-red">Critical</span>
+
+  TABLE PATTERN:
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Col 1</th><th>Col 2</th></tr></thead>
+        <tbody><tr><td>...</td><td>...</td></tr></tbody>
+      </table>
+    </div>
+
+  COLLAPSIBLE SECTION PATTERN:
+    <div id="partN" class="section-anchor">
+      <div class="part-header" onclick="togglePart('partN')">
+        <h2>Part N: Title</h2>
+        <span class="collapse-icon">&#9662;</span>
+      </div>
+      <div class="part-content" id="partN-content">
+        ... content ...
+      </div>
+    </div>
+
+  BILINGUAL LAYOUT (optional, for bilingual reports):
+    <div class="bilingual">
+      <div class="lang-en"> ... English content ... </div>
+      <div class="lang-zh"> ... 中文内容 ... </div>
+    </div>
+    Add lang switcher buttons to navbar (see openclaw/report.html for reference).
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{TITLE}}</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #1c2128;
+    --bg4: #21262d;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --text-muted: #8b949e;
+    --accent: #58a6ff;
+    --accent2: #79c0ff;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --red: #f85149;
+    --orange: #e3b341;
+    --gray: #6e7681;
+    --callout-bg: #0d2438;
+    --callout-border: #1f6feb;
+    --callout-green-bg: #0d2414;
+    --callout-green-border: #238636;
+    --callout-red-bg: #2d1216;
+    --callout-red-border: #b62324;
+    --callout-orange-bg: #271d0c;
+    --callout-orange-border: #9e6a03;
+    --code-bg: #010409;
+    --sidebar-w: 280px;
+    --navbar-h: 60px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 15px; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', 'PingFang SC', sans-serif;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* NAVBAR */
+  #navbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    height: var(--navbar-h);
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 24px;
+    gap: 16px;
+  }
+  #navbar h1 {
+    font-size: 0.95rem; color: var(--accent); font-weight: 600;
+    flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  /* Optional bilingual lang buttons — uncomment if needed
+  .lang-btn {
+    padding: 6px 16px; border-radius: 6px; border: 1px solid var(--border);
+    cursor: pointer; font-size: 0.85rem; font-weight: 500;
+    background: var(--bg3); color: var(--text); transition: all 0.2s;
+  }
+  .lang-btn.active { background: var(--accent); color: #0d1117; border-color: var(--accent); }
+  .lang-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+  */
+  #sidebar-toggle {
+    display: none; background: none; border: 1px solid var(--border);
+    color: var(--text); padding: 6px 10px; border-radius: 6px; cursor: pointer;
+    font-size: 1rem;
+  }
+
+  /* LAYOUT */
+  #layout { display: flex; padding-top: var(--navbar-h); min-height: 100vh; }
+
+  /* SIDEBAR */
+  #sidebar {
+    width: var(--sidebar-w); flex-shrink: 0;
+    position: fixed; top: var(--navbar-h); left: 0; bottom: 0;
+    background: var(--bg2); border-right: 1px solid var(--border);
+    overflow-y: auto; padding: 20px 0;
+  }
+  #sidebar h2 {
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--text-muted); padding: 0 16px 10px; font-weight: 600;
+  }
+  .toc-section { margin-bottom: 4px; }
+  .toc-part {
+    display: block; padding: 8px 16px; font-size: 0.82rem; font-weight: 600;
+    color: var(--accent); text-decoration: none; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .toc-part:hover { background: var(--bg3); }
+  .toc-sub {
+    display: block; padding: 5px 16px 5px 28px; font-size: 0.78rem;
+    color: var(--text-muted); text-decoration: none; transition: all 0.15s;
+  }
+  .toc-sub:hover { color: var(--text); background: var(--bg3); }
+  .toc-divider { border: none; border-top: 1px solid var(--border); margin: 8px 16px; }
+
+  /* MAIN CONTENT */
+  #main {
+    margin-left: var(--sidebar-w);
+    flex: 1; padding: 40px 48px 80px;
+    max-width: calc(100% - var(--sidebar-w));
+  }
+
+  /* METADATA HEADER */
+  .meta-header {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px 28px; margin-bottom: 36px;
+    display: flex; gap: 24px; flex-wrap: wrap;
+  }
+  .meta-item { display: flex; flex-direction: column; gap: 4px; }
+  .meta-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); }
+  .meta-value { font-size: 0.9rem; color: var(--accent2); font-weight: 600; }
+
+  /* BILINGUAL LAYOUT (optional) */
+  .bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .bilingual > * { min-width: 0; }
+
+  /* SECTION HEADERS */
+  .part-header {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-left: 4px solid var(--accent); border-radius: 8px;
+    padding: 16px 20px; margin-bottom: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: background 0.2s;
+  }
+  .part-header:hover { background: var(--bg4); }
+  .part-header h2 { font-size: 1.1rem; color: var(--accent2); font-weight: 700; }
+  .collapse-icon { color: var(--text-muted); font-size: 1.2rem; transition: transform 0.3s; }
+  .part-header.collapsed .collapse-icon { transform: rotate(-90deg); }
+  .part-content { overflow: hidden; transition: max-height 0.4s ease; }
+  .part-content.collapsed { max-height: 0 !important; }
+
+  /* TYPOGRAPHY */
+  h1 { font-size: 1.8rem; color: var(--accent2); margin-bottom: 12px; line-height: 1.3; }
+  h2 { font-size: 1.3rem; color: var(--accent2); margin: 28px 0 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  h3 { font-size: 1.05rem; color: var(--accent); margin: 20px 0 10px; }
+  h4 { font-size: 0.95rem; color: var(--text); font-weight: 600; margin: 16px 0 8px; }
+  p { margin-bottom: 12px; }
+  strong { color: var(--text); font-weight: 600; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ul, ol { padding-left: 22px; margin-bottom: 12px; }
+  li { margin-bottom: 4px; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+  /* CALLOUT BOXES */
+  .callout {
+    background: var(--callout-bg); border: 1px solid var(--callout-border);
+    border-left: 4px solid var(--callout-border); border-radius: 8px;
+    padding: 20px 24px; margin: 16px 0;
+  }
+  .callout h3 { color: var(--accent2); margin-top: 0; font-size: 0.95rem; }
+  .callout ul { margin-bottom: 0; }
+  .callout li { margin-bottom: 8px; color: var(--text); font-size: 0.92rem; }
+
+  .callout-green {
+    background: var(--callout-green-bg); border: 1px solid var(--callout-green-border);
+    border-left: 4px solid var(--callout-green-border); border-radius: 8px;
+    padding: 20px 24px; margin: 16px 0;
+  }
+  .callout-green h3 { color: #3fb950; margin-top: 0; font-size: 0.95rem; }
+  .callout-green ul { margin-bottom: 0; }
+  .callout-green li { margin-bottom: 8px; color: var(--text); font-size: 0.92rem; }
+
+  .callout-red {
+    background: var(--callout-red-bg); border: 1px solid var(--callout-red-border);
+    border-left: 4px solid var(--callout-red-border); border-radius: 8px;
+    padding: 20px 24px; margin: 16px 0;
+  }
+  .callout-red h3 { color: #f85149; margin-top: 0; font-size: 0.95rem; }
+  .callout-red ul { margin-bottom: 0; }
+  .callout-red li { margin-bottom: 8px; color: var(--text); font-size: 0.92rem; }
+
+  .callout-orange {
+    background: var(--callout-orange-bg); border: 1px solid var(--callout-orange-border);
+    border-left: 4px solid var(--callout-orange-border); border-radius: 8px;
+    padding: 20px 24px; margin: 16px 0;
+  }
+  .callout-orange h3 { color: #e3b341; margin-top: 0; font-size: 0.95rem; }
+  .callout-orange ul { margin-bottom: 0; }
+  .callout-orange li { margin-bottom: 8px; color: var(--text); font-size: 0.92rem; }
+
+  /* CODE BLOCKS */
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px; overflow-x: auto;
+    font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', Menlo, Monaco, Consolas, monospace;
+    font-size: 0.8rem; line-height: 1.5; color: #e6edf3; margin: 12px 0;
+    white-space: pre;
+  }
+  code {
+    background: var(--bg4); border-radius: 4px; padding: 2px 6px;
+    font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
+    font-size: 0.85em; color: #e6edf3;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; }
+
+  /* TABLES */
+  .table-wrap { overflow-x: auto; margin: 12px 0; border-radius: 8px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th {
+    background: var(--bg3); color: var(--accent2);
+    padding: 10px 14px; text-align: left; font-weight: 600;
+    border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: var(--bg3); }
+  tr:hover td { background: var(--bg4); }
+
+  /* BADGES */
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 12px;
+    font-size: 0.75rem; font-weight: 600; white-space: nowrap;
+  }
+  .badge-red    { background: rgba(248,81,73,0.15);   color: #f85149; border: 1px solid rgba(248,81,73,0.3); }
+  .badge-orange { background: rgba(227,179,65,0.15);  color: #e3b341; border: 1px solid rgba(227,179,65,0.3); }
+  .badge-gray   { background: rgba(110,118,129,0.15); color: #8b949e; border: 1px solid rgba(110,118,129,0.3); }
+  .badge-green  { background: rgba(63,185,80,0.15);   color: #3fb950; border: 1px solid rgba(63,185,80,0.3); }
+  .badge-blue   { background: rgba(88,166,255,0.15);  color: #58a6ff; border: 1px solid rgba(88,166,255,0.3); }
+
+  /* SECTION ANCHOR */
+  .section-anchor { scroll-margin-top: calc(var(--navbar-h) + 20px); }
+
+  /* INFO BOX */
+  .info-box {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px 18px; margin: 12px 0; font-size: 0.88rem;
+  }
+  .info-box strong { color: var(--accent); }
+
+  /* RESPONSIVE */
+  @media (max-width: 1100px) { .bilingual { grid-template-columns: 1fr; } }
+  @media (max-width: 900px) {
+    #sidebar { transform: translateX(-100%); transition: transform 0.3s; z-index: 900; }
+    #sidebar.open { transform: translateX(0); }
+    #main { margin-left: 0; padding: 20px 16px 60px; max-width: 100%; }
+    #sidebar-toggle { display: block; }
+    #navbar h1 { font-size: 0.82rem; }
+  }
+  @media (max-width: 600px) {
+    #main { padding: 16px 12px 60px; }
+    pre { font-size: 0.72rem; }
+    table { font-size: 0.78rem; }
+    th, td { padding: 7px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav id="navbar">
+  <button id="sidebar-toggle" onclick="toggleSidebar()">&#9776;</button>
+  <h1>{{TITLE}}</h1>
+  <!-- Bilingual buttons (optional — uncomment and add setLang() JS if needed):
+  <button class="lang-btn active" id="btn-both" onclick="setLang('both')">Both / 双语</button>
+  <button class="lang-btn" id="btn-en" onclick="setLang('en')">English</button>
+  <button class="lang-btn" id="btn-zh" onclick="setLang('zh')">中文</button>
+  -->
+</nav>
+
+<!-- SIDEBAR -->
+<aside id="sidebar">
+  <h2>Table of Contents</h2>
+
+  <div class="toc-section">
+    <a class="toc-part" href="#meta">Report Info</a>
+    <a class="toc-part" href="#exec-summary">Executive Summary</a>
+  </div>
+  <hr class="toc-divider">
+
+  <!-- REPLACE with actual TOC for this report: -->
+  <div class="toc-section">
+    <a class="toc-part" href="#part1">Part 1: {{PART1_TITLE}}</a>
+    <a class="toc-sub" href="#p1-s1">{{PART1_SECTION1}}</a>
+    <a class="toc-sub" href="#p1-s2">{{PART1_SECTION2}}</a>
+  </div>
+  <hr class="toc-divider">
+
+  <div class="toc-section">
+    <a class="toc-part" href="#part2">Part 2: {{PART2_TITLE}}</a>
+    <a class="toc-sub" href="#p2-s1">{{PART2_SECTION1}}</a>
+    <a class="toc-sub" href="#p2-s2">{{PART2_SECTION2}}</a>
+  </div>
+  <hr class="toc-divider">
+
+  <div class="toc-section">
+    <a class="toc-part" href="#part3">Part 3: {{PART3_TITLE}}</a>
+    <a class="toc-sub" href="#p3-s1">{{PART3_SECTION1}}</a>
+  </div>
+  <hr class="toc-divider">
+
+  <div class="toc-section">
+    <a class="toc-part" href="#part4">Part 4: {{PART4_TITLE}}</a>
+    <a class="toc-sub" href="#p4-s1">{{PART4_SECTION1}}</a>
+  </div>
+  <hr class="toc-divider">
+
+  <div class="toc-section">
+    <a class="toc-part" href="#part5">Part 5: {{PART5_TITLE}}</a>
+    <a class="toc-sub" href="#p5-s1">{{PART5_SECTION1}}</a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main id="main">
+
+  <!-- METADATA HEADER -->
+  <div id="meta" class="section-anchor">
+    <div class="meta-header">
+      <div class="meta-item">
+        <span class="meta-label">Type</span>
+        <span class="meta-value">{{META_TYPE}}</span>
+        <!-- e.g. "Security Research" or "Tech Trend Research" -->
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Date</span>
+        <span class="meta-value">{{META_DATE}}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Parts</span>
+        <span class="meta-value">{{META_PARTS}}</span>
+        <!-- e.g. "5 (Hardware · Models · Runtimes · Applications · Forecast)" -->
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Research</span>
+        <span class="meta-value">{{META_METHOD}}</span>
+        <!-- e.g. "5 parallel agents · ~30,000 words · primary sources" -->
+      </div>
+    </div>
+  </div>
+
+  <!-- EXECUTIVE SUMMARY -->
+  <div id="exec-summary" class="section-anchor">
+    <div class="part-header" onclick="togglePart('exec')">
+      <h2>Executive Summary</h2>
+      <span class="collapse-icon">&#9662;</span>
+    </div>
+    <div class="part-content" id="exec-content">
+
+      <p>{{EXEC_INTRO}}</p>
+
+      <div class="callout">
+        <h3>Key Findings</h3>
+        <ul>
+          <li>{{FINDING_1}}</li>
+          <li>{{FINDING_2}}</li>
+          <li>{{FINDING_3}}</li>
+          <li>{{FINDING_4}}</li>
+          <li>{{FINDING_5}}</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PART 1 -->
+  <div id="part1" class="section-anchor">
+    <div class="part-header" onclick="togglePart('part1')">
+      <h2>Part 1: {{PART1_TITLE}}</h2>
+      <span class="collapse-icon">&#9662;</span>
+    </div>
+    <div class="part-content" id="part1-content">
+
+      <div id="p1-s1" class="section-anchor">
+        <h3>{{PART1_SECTION1}}</h3>
+        <p>{{PART1_S1_CONTENT}}</p>
+      </div>
+
+      <!-- Add more sections as needed -->
+
+    </div>
+  </div>
+
+  <!-- PART 2 -->
+  <div id="part2" class="section-anchor">
+    <div class="part-header" onclick="togglePart('part2')">
+      <h2>Part 2: {{PART2_TITLE}}</h2>
+      <span class="collapse-icon">&#9662;</span>
+    </div>
+    <div class="part-content" id="part2-content">
+      <!-- Content -->
+    </div>
+  </div>
+
+  <!-- PART 3 -->
+  <div id="part3" class="section-anchor">
+    <div class="part-header" onclick="togglePart('part3')">
+      <h2>Part 3: {{PART3_TITLE}}</h2>
+      <span class="collapse-icon">&#9662;</span>
+    </div>
+    <div class="part-content" id="part3-content">
+      <!-- Content -->
+    </div>
+  </div>
+
+  <!-- PART 4 -->
+  <div id="part4" class="section-anchor">
+    <div class="part-header" onclick="togglePart('part4')">
+      <h2>Part 4: {{PART4_TITLE}}</h2>
+      <span class="collapse-icon">&#9662;</span>
+    </div>
+    <div class="part-content" id="part4-content">
+      <!-- Content -->
+    </div>
+  </div>
+
+  <!-- PART 5 -->
+  <div id="part5" class="section-anchor">
+    <div class="part-header" onclick="togglePart('part5')">
+      <h2>Part 5: {{PART5_TITLE}}</h2>
+      <span class="collapse-icon">&#9662;</span>
+    </div>
+    <div class="part-content" id="part5-content">
+      <!-- Content -->
+    </div>
+  </div>
+
+  <hr style="margin-top:48px;">
+  <p style="font-size:0.78rem; color:var(--text-muted); margin-top:16px; padding-bottom:32px;">
+    {{FOOTER_NOTE}}
+    <!-- e.g. "Research date: YYYY-MM-DD · N parallel research agents · ~N,000 words of primary source research." -->
+  </p>
+
+</main>
+
+<script>
+  // Collapsible sections
+  function togglePart(id) {
+    const content = document.getElementById(id + '-content');
+    const header = content.previousElementSibling;
+    const isCollapsed = content.classList.contains('collapsed');
+    if (isCollapsed) {
+      content.classList.remove('collapsed');
+      content.style.maxHeight = content.scrollHeight + 'px';
+      header.classList.remove('collapsed');
+    } else {
+      content.style.maxHeight = content.scrollHeight + 'px';
+      requestAnimationFrame(() => {
+        content.classList.add('collapsed');
+        header.classList.add('collapsed');
+      });
+    }
+  }
+
+  // Initialize max-height for animation
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.part-content').forEach(el => {
+      el.style.maxHeight = el.scrollHeight + 'px';
+    });
+  });
+
+  // Mobile sidebar
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+  }
+  document.addEventListener('click', function(e) {
+    if (window.innerWidth <= 900) {
+      const sidebar = document.getElementById('sidebar');
+      const toggle = document.getElementById('sidebar-toggle');
+      if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== toggle) {
+        sidebar.classList.remove('open');
+      }
+    }
+  });
+
+  // Smooth scroll for TOC links
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      e.preventDefault();
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        const top = target.getBoundingClientRect().top + window.pageYOffset - 80;
+        window.scrollTo({ top, behavior: 'smooth' });
+        if (window.innerWidth <= 900) document.getElementById('sidebar').classList.remove('open');
+      }
+    });
+  });
+
+  /* Bilingual language switcher (optional — uncomment if using bilingual layout)
+  function setLang(lang) {
+    document.querySelectorAll('.lang-en').forEach(el => {
+      el.style.display = (lang === 'zh') ? 'none' : '';
+    });
+    document.querySelectorAll('.lang-zh').forEach(el => {
+      el.style.display = (lang === 'en') ? 'none' : '';
+    });
+    ['btn-both','btn-en','btn-zh'].forEach(id => {
+      document.getElementById(id).classList.remove('active');
+    });
+    document.getElementById('btn-' + lang).classList.add('active');
+  }
+  */
+</script>
+</body>
+</html>
