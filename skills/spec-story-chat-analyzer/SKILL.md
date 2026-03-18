@@ -1,212 +1,273 @@
 ---
-name: spec-story-chat-analyzer
+name: chat-analyzer
 description: >
-  Analyze SpecStory chat history exports to identify workflow patterns,
-  inefficiencies, and produce actionable suggestions for improving AGENTS.md,
-  constitution files, and any spec/constraint documents. This skill bundles a
-  companion CLI script (chat_analyze.py) so it can navigate large files without
-  reading them whole.
+  Analyze SpecStory chat history exports to identify problems, friction points,
+  and areas needing improvement. This skill should be used when the user wants
+  to understand what went wrong in their agent interactions. Use when the user
+  asks to "analyze chat history", "what went wrong", "review agent sessions",
+  or "find problems in conversations".
 ---
 
-# Chat Analyzer Skill
+# Chat Analyzer
 
-Analyze SpecStory (or compatible) chat history exports and produce concrete
-improvement suggestions for agent constitution files (AGENTS.md, CLAUDE.md,
-.cursorrules, OpenSpec, etc.).
+Analyze SpecStory chat history exports and produce a detailed analysis report
+with actionable fixes for agent constitution files (AGENTS.md, CLAUDE.md, etc.).
 
-## The Core Problem
+## Quick Start
 
-Chat history files are large (10k–100k+ lines). Reading them wholesale burns
-context. Instead, use the **chat_analyze.py** CLI to get a lightweight map of
-the file, then drill into specific areas with targeted reads.
+```bash
+# Get full analysis report (main output)
+python3 chat_analyze.py analyze data/history.md
+
+# Get problems checklist
+python3 chat_analyze.py problems data/history.md
+
+# Supporting commands for deep-dive
+python3 chat_analyze.py stats   data/history.md
+python3 chat_analyze.py toc     data/history.md
+python3 chat_analyze.py tools   data/history.md
+python3 chat_analyze.py show    data/history.md <LINE>
+python3 chat_analyze.py grep    data/history.md "<pattern>"
+```
+
+## Output Format
+
+The `analyze` command produces a comprehensive report:
+
+```
+# Chat History Analysis: [filename]
+
+## Summary
+- Sessions: N
+- Messages: N
+- Tool calls: N
+- Estimated tokens: Nk
+- Dominant tool mix: tool1 N, tool2 N, tool3 N
+- High-risk indicators: secret exposure, scope drift, restart loops
+
+## Primary Findings
+
+### 1. Secret Exposure In Chat
+Severity: high
+Evidence: [specific line numbers with credentials]
+Pattern: [what went wrong]
+Impact: [consequences]
+Recommended fix: [concrete actions]
+
+### 2. Scope Drift Across Major Sessions
+...
+
+### 3. Environment Churn And Restart Loops
+...
+
+## Session-By-Session Breakdown
+
+### Session at line N: [title]
+- Shape: N messages, N tool calls.
+- Issue: [problems detected]
+- Pattern: [behavioral pattern]
+- Better split: [recommendation]
+
+## Recommended Conversation Policy Changes
+1. [Specific policy recommendation]
+2. [Specific policy recommendation]
+...
+```
+
+## Problem Detection
+
+The analyzer detects these high-value patterns:
+
+### Critical Issues (High Severity)
+| Pattern | Detection | Impact |
+|---------|-----------|--------|
+| Secret exposure | Database URLs, API keys, passwords, tokens in chat | Credentials compromised, export file becomes sensitive |
+| Scope drift | Session topic changes significantly from original request | Acceptance criteria unclear, test results unreliable |
+| Infrastructure failure | API errors, model config errors, network failures | Sessions blocked entirely, no deliverable output |
+
+### Code Quality Issues (Medium Severity)
+| Pattern | Detection | Impact |
+|---------|-----------|--------|
+| Buggy code | Multiple debugging iterations, "still broken", visual bugs | Extended session time, user has to report and wait for fixes |
+| User frustration | User says "no", "wrong", "try again", "not what I wanted" | Wasted effort, unclear requirements |
+
+### Environment Issues (Medium Severity)
+| Pattern | Detection | Impact |
+|---------|-----------|--------|
+| Restart loops | Repeated startup/restart commands across sessions | Slow feedback, unclear baseline, stale processes |
+| Skill config issues | Missing SKILL.md, Python environment problems, skill format errors | Skills unusable until fixed, added friction |
+
+### Session Issues (Low Severity)
+| Pattern | Detection | Impact |
+|---------|-----------|--------|
+| Session bloat | >25 messages in single session | Context accumulation, hard to track progress |
+| Incomplete session | Session ends with TODO/FIXME/WIP | Work not finished, unclear completion |
+
+## Secret Detection Patterns
+
+The analyzer detects:
+- Database connection strings (mysql://, postgres://, mongodb://, redis://)
+- API keys and secrets (api_key, secret_key, API_SECRET)
+- Passwords in configuration
+- Bearer tokens and auth tokens
+- AWS access keys
+- OpenAI-style keys (sk-*)
+- Slack tokens (xoxb-, xoxp-)
+
+## Scope Drift Detection
+
+Sessions are analyzed for topic changes:
+- authentication -> frontend
+- requirements -> implementation
+- feature work -> deployment
+- development -> debugging
+
+When the first quarter of a session focuses on one topic but the last quarter focuses on a different topic, scope drift is flagged.
+
+## Restart Loop Detection
+
+Detects patterns like:
+- restart server/service commands
+- npm start, flask run, uvicorn
+- port occupation issues
+- kill/stop process commands
+- Multiple restart attempts in a session or across adjacent sessions
+
+## Buggy Code Detection
+
+Detects iterative debugging patterns:
+- "still not working", "still broken", "still frozen", "still invisible"
+- "now it's broken", "now the UI is bugged"
+- "same error again", "still getting the same error"
+- "another bug", "more issues"
+- Visual bugs: "invisible lawn", "frozen zombie", "invisible element"
+
+When 2+ debugging patterns appear in a session, it indicates buggy initial implementation.
+
+## Infrastructure Failure Detection
+
+Detects technical failures that block progress:
+- Invalid model configuration errors
+- API HTTP errors (404, 500, rate limits)
+- Network errors (connection refused, timeout, DNS errors)
+
+These failures often block sessions entirely with no deliverable output.
+
+## Skill Configuration Issue Detection
+
+Detects problems with skills and tools:
+- Missing SKILL.md files
+- Skill not found or configuration errors
+- Skill format errors
+- Suggestions to use Bash instead of Python
 
 ## CLI Reference
-
-The CLI is bundled with this skill as `chat_analyze.py` in the same directory
-as `SKILL.md`. All commands accept a file path or default to the first `.md`
-in `./data/`.
-
-If you need the absolute path to the bundled script, use the skill directory
-that contains this `SKILL.md` and run `python3 <skill_dir>/chat_analyze.py`.
 
 ```
 python3 chat_analyze.py <command> [FILE] [OPTIONS]
 ```
 
-| Command            | What it returns                                             |
-|--------------------|-------------------------------------------------------------|
-| `stats [FILE]`     | Counts: sessions, messages, tool calls (by type+name), tokens |
-| `toc [FILE]`       | Flat TOC: session titles + user/agent lines with line numbers |
-| `show [FILE] LINE` | ±15 lines around LINE (use `--context N` to change window)  |
-| `grep [FILE] PAT`  | Regex search → all matching lines with numbers              |
-| `tools [FILE]`     | Every tool call: line number, type, tool name               |
-| `think [FILE]`     | Every think block: start/end line + first line of content   |
-| `const [DIR]`      | Finds AGENTS.md, CLAUDE.md, .cursorrules, OpenSpec, etc.    |
-| `suggest [FILE]`   | Automated hints → which AGENTS.md areas to improve         |
+| Command | What it returns |
+|---------|-----------------|
+| `analyze [FILE]` | Full analysis report with session breakdown |
+| `problems [FILE]` | Checklist of problems with fixes |
+| `stats [FILE]` | Counts: sessions, messages, tools, tokens |
+| `toc [FILE]` | Table of contents with line numbers |
+| `show [FILE] LINE` | ±15 lines around LINE |
+| `grep [FILE] PAT` | Regex search with line numbers |
+| `tools [FILE]` | All tool calls with line numbers |
+| `think [FILE]` | All think blocks with line numbers |
+| `const [DIR]` | Find AGENTS.md, CLAUDE.md, etc. |
 
-### Typical analysis workflow
+## Analysis Workflow
 
-```bash
-# Step 1 — get the lay of the land (cheap, ~1000 tokens)
-python3 chat_analyze.py stats  data/history.md
-python3 chat_analyze.py toc    data/history.md
+1. **Run `analyze` first** - get the comprehensive report
+2. **Review Primary Findings** - understand severity and evidence
+3. **Drill into specific sessions** - use `show` with line numbers from output
+4. **Locate spec files** - use `const` to find AGENTS.md
+5. **Apply policy changes** - add specific rules to constitution files
 
-# Step 2 — drill into a session of interest  (line from toc output)
-python3 chat_analyze.py show   data/history.md 9587 --context 30
+## What NOT to Output
 
-# Step 3 — find all uses of a specific tool or keyword
-python3 chat_analyze.py tools  data/history.md | grep edit_file
-python3 chat_analyze.py grep   data/history.md "AGENTS\.md"
+- Generic suggestions ("improve communication")
+- Praise for what worked
+- "On the horizon" futuristic ideas
+- Vague recommendations without line references
+- Tool usage rates as problems (reading files frequently is normal)
 
-# Step 4 — locate constitution files in the target project
-python3 chat_analyze.py const  /path/to/project
+## Example Output
 
-# Step 5 — get automated suggestions
-python3 chat_analyze.py suggest data/history.md
 ```
+# Chat History Analysis: history.md
 
-### Analyst checklist
+## Summary
 
-Use this checklist while applying the skill:
+- Sessions: 22
+- Messages: 132
+- Tool calls: 920
+- Estimated tokens: 266k
+- Dominant tool mix: write 292, read 288, shell 186
+- High-risk indicators: secret exposure, repeated restart loops, scope drift
 
-1. Run `stats` and `toc` before any deep reads.
-2. Confirm whether the user wants diagnosis, process guidance, instruction edits, or session-by-session review.
-3. Identify the longest or most scope-drifting sessions first.
-4. Use `show` to inspect the opening user request of each target session.
-5. Use `grep` for restart loops, deployment pivots, secrets, and other risk keywords.
-6. Use `tools` to judge whether read/write/shell usage is imbalanced.
-7. Write findings first, then remediation, and only then any process guidance.
+The chat is not mainly failing because of one bad answer. It is failing because
+analysis, implementation, debugging, environment repair, deployment, and
+configuration handling were allowed to accumulate in the same long-running thread.
 
+## Primary Findings
 
-## Analysis Methodology
+### 1. Secret Exposure In Chat
 
-### Phase 1 — Structural scan (always start here)
+Severity: high
 
-Run `stats` and `toc`. Look for:
+Evidence:
+- `mysql+pymysql://...` appears at source lines 19179, 19938, 20066.
+- API secret material appears at source lines 22934, 22945.
 
-- **sessions**: how many independent tasks were performed?
-- **think_blocks / agent_messages** ratio: >2 means unclear instructions
-- **tool_type breakdown**: imbalanced write/read/shell ratios
-- **Top tool names**: which tools are called most — are there repeated patterns?
-- **Session breakdown table**: which sessions are long (many messages or tool calls)?
+Pattern:
+The conversation used the chat log itself as a transport for runtime credentials.
 
-### Phase 2 — Deep-dive into problem sessions
+Impact:
+- anyone with the export can recover live credentials,
+- analysis outputs become unsafe to share.
 
-For sessions with many messages (>20) or tool calls (>100):
-1. `show FILE <session_start_line>` — read the user request
-2. `show FILE <agent_line>` — read the agent's first think block
-3. `tools FILE | grep <line_range>` — list all tools used in that session
-4. `sed -n 'START,ENDp' FILE` — read a contiguous block if needed
+Recommended fix:
+- redact all credentials in conversation,
+- rotate the leaked credentials,
+- add a hard rule that the agent must never repeat pasted secrets back verbatim.
 
-### Phase 3 — Identify patterns
+### 2. Scope Drift Across Major Sessions
 
-| Pattern | What to look for | Likely AGENTS.md fix |
-|---------|-----------------|---------------------|
-| Repeated reads | `tools` output shows same file read 5+ times | Add "read once" policy |
-| Long think blocks | `think` shows many >50-line blocks | Clarify decision rules in spec |
-| Shell dominance | `stats` shows shell >40% of tool calls | Add allowed-commands list |
-| Write dominance | `stats` shows write >35% | Add file hygiene policy |
-| Missing bootstrap reads | `tools` first 10 lines have no `read` | Add "read AGENTS.md first" rule |
-| Session sprawl | TOC shows sessions with >30 messages | Add task-size rule |
-| Unknown tool type | `tools` shows `unknown` type frequently | Check tool registration config |
+Severity: high
 
-### Phase 4 — Locate and improve spec files
+Evidence:
+- The session starting at source line 9587 begins as requirement decomposition.
+- That same thread later shifts into frontend implementation at source line 14691.
 
-```bash
-python3 chat_analyze.py const /path/to/project
+Pattern:
+The thread keeps carrying forward prior context instead of re-establishing a clean goal.
+
+Recommended fix:
+- enforce one major objective per thread,
+- require explicit re-scoping when the task changes domain.
+
+## Session-By-Session Breakdown
+
+### Session at line 5: Project scaffold initialization
+- Shape: 8 messages, 132 tool calls.
+- Issue: heavy write volume early suggests large scaffold generation.
+- Pattern: session focused on setup.
+- Better split: consider breaking into smaller initialization steps.
+
+### Session at line 9585: System module decomposition
+- Shape: 24 messages, 223 tool calls.
+- Issue: scope drift from requirements to implementation.
+- Pattern: session started with requirements, drifted to frontend work.
+- Better split: separate requirements analysis from implementation.
+
+## Recommended Conversation Policy Changes
+
+1. Do not allow secrets in chat. Redirect them to a secure local env file immediately.
+2. Cap major sessions by objective, not by elapsed time.
+3. Require a scope-reset sentence when the request switches domain.
+4. Replace repeated startup replies with one canonical runbook.
 ```
-
-Then read the relevant sections:
-```bash
-# Read first 100 lines of AGENTS.md
-head -100 /path/to/project/AGENTS.md
-
-# Find what's already covered
-grep -n "^##" /path/to/project/AGENTS.md
-```
-
-### Phase 5 — Draft improvements
-
-Based on the patterns, propose specific additions/changes.  Follow these rules:
-- **Be surgical**: add the minimum text needed to address the pattern
-- **Use examples**: bad examples are more memorable than abstract rules
-- **Link to evidence**: cite session line numbers (e.g. "see line 9587")
-- **Avoid duplication**: always `grep` before adding new rules
-
-## Improvement Categories
-
-### 1. Context bootstrapping
-Add to AGENTS.md if missing:
-```markdown
-## Task Start Checklist
-1. Read AGENTS.md (this file) and relevant spec files
-2. Run `python3 chat_analyze.py stats data/latest.md` to orient yourself
-3. Identify the task type and applicable constraints before taking any action
-```
-
-### 2. Tool use policies
-Common additions to reduce repeated reads and shell sprawl:
-```markdown
-## Tool Use Rules
-- **Read once**: cache file contents in your working memory; do not re-read unless the file has changed
-- **Shell safety**: only run commands explicitly approved in the task description; never use `rm -rf`, `sudo`, or pipeline chains >3 stages without approval
-- **Write batching**: collect all edits before writing; prefer a single multi-edit call over multiple single-line writes
-```
-
-### 3. Task scoping
-Add when sessions run long:
-```markdown
-## Task Size Limit
-- If a task requires >15 tool calls to complete, pause and ask the user to confirm scope
-- Break tasks into sub-tasks with acceptance criteria before starting
-```
-
-### 4. File hygiene
-Add when write ratio is high:
-```markdown
-## File Management
-- Temp files: use `tmp_<task_id>_<name>` naming; delete after task
-- Never create files outside the project root without explicit approval
-- Log all new files created in the session summary
-```
-
-### 5. Decision rules
-Add when think ratio is high (agent deliberates excessively):
-```markdown
-## Decision Framework
-When in doubt about approach:
-1. Re-read the relevant spec section
-2. Choose the option least likely to require reverting
-3. If still unclear, ask the user — a 30-second question beats a 10-minute wrong path
-```
-
-## Output Format
-
-When reporting analysis results, use this structure:
-
-```markdown
-## Chat History Analysis: <filename>
-
-### Summary
-- Sessions: N, Messages: N, Tool calls: N, Est. tokens: Nk
-- Key sessions: [line: title, ...]
-
-### Issues Found
-1. **<issue title>** (severity: high/medium/low)
-   - Evidence: line NNN — <describe what's there>
-   - Pattern: <what it means>
-   - Fix: <specific text to add/change in AGENTS.md>
-
-### Suggested AGENTS.md Changes
-<diff-style or prose description of changes>
-
-### Spec Files Checked
-- <path> — <current coverage gaps>
-```
-
-## Important Notes
-
-- **Never read the full chat file** if it's >5000 lines — always navigate with the CLI first
-- The CLI companion script is bundled with this skill as `chat_analyze.py`
-- For cross-file analysis (comparing two chat histories), run `stats` and `suggest` on each and diff the output
-- The CLI uses `python3` — ensure it's available in the shell before running
