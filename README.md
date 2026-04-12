@@ -15,6 +15,7 @@ This repository includes the following skills under the `skills/` directory. Eac
 - [polymarket-analyzer](skills/polymarket-analyzer/SKILL.md)
 - [project-initializer](skills/project-initializer/SKILL.md)
 - [retrospect](skills/retrospect/SKILL.md)
+- [session-review](skills/session-review/SKILL.md)
 
 
 ## Installation
