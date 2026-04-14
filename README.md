@@ -7,6 +7,7 @@ A centralized repository for maintaining agent skills and meta-skills for softwa
 
 This repository includes the following skills under the `skills/` directory. Each skill contains a `SKILL.md` describing its purpose and usage.
 
+- [beautiful-drawio](skills/beautiful-drawio/SKILL.md)
 - [brownfield-onboarding](skills/brownfield-onboarding/SKILL.md)
 - [claude-code-pm](skills/claude-code-pm/SKILL.md)
 - [deepresearch](skills/deepresearch/SKILL.md)

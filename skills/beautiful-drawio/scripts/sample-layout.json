@@ -1,0 +1,60 @@
+{
+  "id": "sample-diagram",
+  "name": "Sample Diagram",
+  "diagramType": "product-block",
+  "page": {
+    "width": 1200,
+    "height": 800,
+    "grid": 10
+  },
+  "nodes": [
+    {
+      "id": "lane",
+      "label": "Service Lane",
+      "kind": "container",
+      "order": 1,
+      "width": 760,
+      "height": 240,
+      "autoBounds": true,
+      "style": "rounded=1;whiteSpace=wrap;html=1;verticalAlign=top;align=left;spacingTop=8;spacingLeft=10;fillColor=#ffffff;strokeColor=#111827;strokeWidth=2;fontStyle=1;fontColor=#111827;"
+    },
+    {
+      "id": "a",
+      "label": "Node A",
+      "parent": "lane",
+      "order": 1,
+      "width": 180,
+      "height": 56
+    },
+    {
+      "id": "b",
+      "label": "Node B",
+      "parent": "lane",
+      "order": 2,
+      "width": 180,
+      "height": 56
+    },
+    {
+      "id": "c",
+      "label": "Node C",
+      "parent": "lane",
+      "order": 3,
+      "width": 180,
+      "height": 56
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "a",
+      "target": "b",
+      "kind": "primary"
+    },
+    {
+      "id": "e2",
+      "source": "b",
+      "target": "c",
+      "kind": "audit"
+    }
+  ]
+}
