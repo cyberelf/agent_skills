@@ -1,6 +1,6 @@
 ---
 name: deepresearch
-description: Conduct structured deep research on any topic — security threat analysis, technology trend mapping, ecosystem analysis, or market forecasts. Produces a multi-part report grounded in confirmed sources with no premature design assumptions. Use when asked to "deepresearch", "research deeply", or produce a comprehensive multi-part research report. Auto-detects whether the topic calls for security-focused or tech-trend-focused structure.
+description: Conduct structured deep research on any topic — security threat analysis, technology trend mapping, ecosystem analysis, market forecasts, or law/policy compliance research. Produces a multi-part report grounded in confirmed sources with no premature design assumptions. Use when asked to "deepresearch", "research deeply", or produce a comprehensive multi-part research report. Auto-detects whether the topic calls for security-focused, tech-trend-focused, or law/policy-focused structure.
 allowed-tools: Agent, WebFetch, WebSearch, Read, Write, Edit, Glob, Grep, Bash
 ---
 
@@ -16,6 +16,7 @@ This skill is split across files — read the relevant ones before proceeding:
 |------|---------|
 | `security.md` | Full template and agent prompts for security research mode |
 | `techtrend.md` | Full template and agent prompts for tech trend / ecosystem research mode |
+| `law-policy.md` | Full template and agent prompts for law, policy, regulatory, and compliance research mode |
 | `report-template.html` | HTML report template — use when user requests an HTML output |
 
 ---
@@ -28,7 +29,8 @@ Determine research mode from the query **before reading any template**:
 |------|-----------------|-----------------|
 | `security` | security, threat, CVE, attack, defense, vulnerability, exploit, risk, malware | Read `security.md` |
 | `techtrend` | trend, forecast, ecosystem, landscape, technology, hardware, market, adoption | Read `techtrend.md` |
-| Ambiguous | Neither clearly applies | Ask: "Is this a security analysis or a technology trend/ecosystem research?" |
+| `law-policy` | law, policy, regulation, compliance, legal requirement, statutory, retention, audit trail, recordkeeping, regulator, licensee, service provider, data residency, data protection, privacy, telecom law, cybersecurity law | Read `law-policy.md` |
+| Ambiguous | None clearly applies, or multiple modes are plausible | Ask: "Is this a security analysis, technology trend/ecosystem research, or law/policy compliance research?" |
 
 ---
 
@@ -44,7 +46,7 @@ After detecting mode, **read the appropriate template file** in full before writ
 
 ## Step 3: Execute
 
-Follow the execution steps in the template. The core workflow is the same for both modes:
+Follow the execution steps in the template. The core workflow is the same for all modes:
 
 1. Write `RESEARCH_PLAN.md` in a new `{topic}_{YYYYMM}/` folder
 2. Launch 5 parallel background agents (one per part)
@@ -54,7 +56,7 @@ Follow the execution steps in the template. The core workflow is the same for bo
 
 ---
 
-## Universal Rules (apply to both modes)
+## Universal Rules (apply to all modes)
 
 ### Source quality
 - **Specs/products**: Official vendor docs, press releases, spec sheets
@@ -62,6 +64,7 @@ Follow the execution steps in the template. The core workflow is the same for bo
 - **Academic**: arXiv, NeurIPS/ICLR/CVPR/ACL proceedings, OpenReview
 - **Market data**: Gartner, IDC, Forrester, MarketsandMarkets, Crunchbase
 - **Regulatory**: EUR-Lex, NIST, CISA, Federal Register, national AI laws
+- **Law/policy**: official gazettes, government legal portals, regulator websites, ministry publications, court/tribunal decisions, official consultation papers
 - **Benchmarks**: MLCommons/MLPerf, HuggingFace leaderboards, official vendor disclosures
 - **Do NOT cite**: Wikipedia, unattributed blogs, secondary summaries
 
@@ -90,8 +93,9 @@ Follow the execution steps in the template. The core workflow is the same for bo
 2. **Shallow agents**: Anchor every agent with 3–5 specific URLs to fetch first
 3. **Premature design** (security mode): Do not write Part 4 before Parts 1–3 are reviewed
 4. **Fixed dimensions** (techtrend mode): Parts 2–4 are defined per-topic in the plan, not preset
-5. **Blocked sources**: Chinese sources behind auth walls — search for equivalent open-web sources
-6. **Context length**: Raw research files can be 5,000–7,000 words each — read them carefully
+5. **Legal status confusion** (law-policy mode): never mix binding law, proposed rules, regulator guidance, unofficial translations, and vendor summaries without labeling them
+6. **Blocked sources**: Chinese sources behind auth walls — search for equivalent open-web sources
+7. **Context length**: Raw research files can be 5,000–7,000 words each — read them carefully
 
 ---
 
@@ -107,6 +111,11 @@ Follow the execution steps in the template. The core workflow is the same for bo
 /deepresearch endpoint LLM ecosystem — hardware, models, runtimes, applications
 /deepresearch autonomous vehicle software stack trends and 2030 forecast
 /deepresearch edge AI chip market landscape
+
+# Law/policy (auto-detected)
+/deepresearch data residency laws for financial SaaS in Singapore, Indonesia, and Malaysia
+/deepresearch firewall log retention compliance requirements in Thailand and Turkiye
+/deepresearch EU AI Act obligations for enterprise AI coding assistants
 
 # With HTML output
 /deepresearch endpoint LLM ecosystem output: html
