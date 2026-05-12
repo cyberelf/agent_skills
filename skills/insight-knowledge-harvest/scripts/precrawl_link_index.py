@@ -44,6 +44,21 @@ TRACKING_PARAMS = {
     "utm_term",
 }
 USER_AGENT = "insight-knowledge-harvest-precrawl/1.0"
+RAW_CLASSIFICATION_COLUMNS = ("material_kind", "topic_domain", "credibility_tier")
+DETAILED_CLASSIFICATION_COLUMNS = (
+    "evidence_type",
+    "ingestion_priority",
+    "lifecycle_status",
+    "insight_potential",
+    "source_bias",
+    "compliance_status",
+)
+CLASSIFICATION_COLUMNS = RAW_CLASSIFICATION_COLUMNS + DETAILED_CLASSIFICATION_COLUMNS
+LINK_COLUMN_DEFINITIONS = {
+    **{column: f"{column} TEXT" for column in CLASSIFICATION_COLUMNS},
+    "classification_source": "classification_source TEXT",
+    "classification_updated_at": "classification_updated_at TEXT",
+}
 
 
 @dataclass(frozen=True)
@@ -168,6 +183,17 @@ def create_schema(conn: sqlite3.Connection) -> None:
             title_hint TEXT,
             publication_date_hint TEXT,
             language_hint TEXT,
+            material_kind TEXT,
+            topic_domain TEXT,
+            credibility_tier TEXT,
+            evidence_type TEXT,
+            ingestion_priority TEXT,
+            lifecycle_status TEXT,
+            insight_potential TEXT,
+            source_bias TEXT,
+            compliance_status TEXT,
+            classification_source TEXT,
+            classification_updated_at TEXT,
             source_kind TEXT,
             last_observed_from TEXT,
             last_error TEXT,
@@ -191,6 +217,15 @@ def create_schema(conn: sqlite3.Connection) -> None:
         CREATE INDEX IF NOT EXISTS idx_observations_url ON observations(canonical_url);
         """
     )
+    ensure_link_columns(conn)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_links_classification ON links(material_kind, credibility_tier)")
+
+
+def ensure_link_columns(conn: sqlite3.Connection) -> None:
+    existing_columns = {row[1] for row in conn.execute("PRAGMA table_info(links)").fetchall()}
+    for column, definition in LINK_COLUMN_DEFINITIONS.items():
+        if column not in existing_columns:
+            conn.execute(f"ALTER TABLE links ADD COLUMN {definition}")
 
 
 def merge_metadata(existing_json: str, new_metadata: dict[str, str] | None) -> str:
@@ -420,21 +455,22 @@ def parse_front_matter(path: Path) -> dict[str, str]:
     return metadata
 
 
-def parse_ingest_table(path: Path) -> list[dict[str, str]]:
+def parse_markdown_tables(path: Path) -> list[dict[str, str]]:
     if not path.exists():
         return []
     rows: list[dict[str, str]] = []
     headers: list[str] = []
     for line in read_text_file(path, 512 * 1024).splitlines():
         if not line.startswith("|"):
+            headers = []
             continue
         cells = [clean_cell(cell) for cell in line.strip().strip("|").split("|")]
         if not cells:
             continue
-        if "material_id" in cells and "canonical_url" in cells:
+        if not headers:
             headers = cells
             continue
-        if not headers or all(re.fullmatch(r"-+", cell) for cell in cells):
+        if all(re.fullmatch(r":?-+:?", cell) for cell in cells):
             continue
         if len(cells) < len(headers):
             cells.extend([""] * (len(headers) - len(cells)))
@@ -442,8 +478,54 @@ def parse_ingest_table(path: Path) -> list[dict[str, str]]:
     return rows
 
 
+def parse_ingest_table(path: Path) -> list[dict[str, str]]:
+    return [row for row in parse_markdown_tables(path) if "material_id" in row and "canonical_url" in row]
+
+
+def extract_classification_fields(row: dict[str, str]) -> dict[str, str]:
+    fields: dict[str, str] = {}
+    for column in CLASSIFICATION_COLUMNS:
+        value = clean_cell(row.get(column, ""))
+        if value:
+            fields[column] = value
+    return fields
+
+
+def update_classification_state(
+    conn: sqlite3.Connection,
+    *,
+    classification_fields: dict[str, str],
+    classification_source: str,
+    canonical_url: str = "",
+    material_id: str = "",
+) -> int:
+    if not classification_fields:
+        return 0
+    assignments = [f"{column} = COALESCE(NULLIF(?, ''), {column})" for column in classification_fields]
+    assignments.extend(["classification_source = ?", "classification_updated_at = ?"])
+    params = [classification_fields[column] for column in classification_fields]
+    params.extend([classification_source, utc_now()])
+    if canonical_url:
+        where_clause = "canonical_url = ?"
+        params.append(canonical_url)
+    elif material_id:
+        where_clause = "material_id = ?"
+        params.append(material_id)
+    else:
+        return 0
+    cursor = conn.execute(
+        f"""
+        UPDATE links
+        SET {', '.join(assignments)}
+        WHERE {where_clause}
+        """,
+        params,
+    )
+    return cursor.rowcount
+
+
 def sync_existing_state(conn: sqlite3.Connection, workspace: Path, collection_id: str | None, run_id: str) -> dict[str, int]:
-    stats = {"ingest_rows": 0, "raw_files": 0}
+    stats = {"ingest_rows": 0, "raw_files": 0, "classification_rows": 0}
     ingest_path = workspace / "source" / "ingest.md"
     for row in parse_ingest_table(ingest_path):
         canonical = normalize_url(row.get("canonical_url", "")) or normalize_url(row.get("source_name", ""))
@@ -474,6 +556,8 @@ def sync_existing_state(conn: sqlite3.Connection, workspace: Path, collection_id
             title_hint=row.get("title", ""),
             source_name_hint=row.get("source_name", ""),
             publication_date_hint=row.get("publication_date", ""),
+            classification_fields=extract_classification_fields(row),
+            classification_source=str(ingest_path),
         )
         stats["ingest_rows"] += 1
     raw_dir = workspace / "source" / "raw"
@@ -503,9 +587,38 @@ def sync_existing_state(conn: sqlite3.Connection, workspace: Path, collection_id
                 source_name_hint=metadata.get("source_name", ""),
                 publication_date_hint=metadata.get("publication_date", ""),
                 language_hint=metadata.get("language", ""),
+                classification_fields=extract_classification_fields(metadata),
+                classification_source=str(raw_path),
             )
             stats["raw_files"] += 1
+    stats["classification_rows"] += sync_register_classifications(conn, workspace)
     return stats
+
+
+def sync_register_classifications(conn: sqlite3.Connection, workspace: Path) -> int:
+    registers_dir = workspace / "source" / "registers"
+    if not registers_dir.exists():
+        return 0
+    updated_rows = 0
+    for register_path in sorted(registers_dir.glob("*.md")):
+        if register_path.name == "classification-schema.md":
+            continue
+        for row in parse_markdown_tables(register_path):
+            classification_fields = extract_classification_fields(row)
+            if not classification_fields:
+                continue
+            canonical = normalize_url(row.get("canonical_url", "")) or ""
+            material_id = clean_cell(row.get("material_id", ""))
+            if not canonical and not material_id:
+                continue
+            updated_rows += update_classification_state(
+                conn,
+                canonical_url=canonical,
+                material_id=material_id,
+                classification_fields=classification_fields,
+                classification_source=str(register_path),
+            )
+    return updated_rows
 
 
 def update_processing_state(
@@ -521,6 +634,8 @@ def update_processing_state(
     source_name_hint: str = "",
     publication_date_hint: str = "",
     language_hint: str = "",
+    classification_fields: dict[str, str] | None = None,
+    classification_source: str = "",
 ) -> None:
     crawl_status = "not_started"
     if download_status in {"downloaded", "metadata_only", "blocked", "failed", "manual_required"}:
@@ -558,6 +673,14 @@ def update_processing_state(
             canonical_url,
         ),
     )
+    if classification_fields:
+        update_classification_state(
+            conn,
+            canonical_url=canonical_url,
+            material_id=material_id,
+            classification_fields=classification_fields,
+            classification_source=classification_source,
+        )
 
 
 def begin_run(conn: sqlite3.Connection, command: str, workspace: Path) -> str:
@@ -593,7 +716,7 @@ def cmd_sync(args: argparse.Namespace) -> int:
         stats = sync_existing_state(conn, workspace, args.collection_id, run_id)
         finish_run(conn, run_id, stats)
         conn.commit()
-    print(f"synced {stats['ingest_rows']} ingest rows and {stats['raw_files']} raw files into {db_path}")
+    print(f"synced {stats['ingest_rows']} ingest rows, {stats['raw_files']} raw files, and {stats.get('classification_rows', 0)} classification rows into {db_path}")
     return 0
 
 
@@ -610,7 +733,7 @@ def cmd_scan(args: argparse.Namespace) -> int:
     if args.source_priority:
         source_priority = Path(args.source_priority)
         paths.append(source_priority if source_priority.is_absolute() else workspace / source_priority)
-    stats = {"input_files": 0, "seed_fetches": 0, "seen": 0, "new": 0, "filtered": 0, "errors": 0, "ingest_rows": 0, "raw_files": 0}
+    stats = {"input_files": 0, "seed_fetches": 0, "seen": 0, "new": 0, "filtered": 0, "errors": 0, "ingest_rows": 0, "raw_files": 0, "classification_rows": 0}
     with connect(db_path) as conn:
         run_id = begin_run(conn, "scan", workspace)
         if not args.no_sync_existing:

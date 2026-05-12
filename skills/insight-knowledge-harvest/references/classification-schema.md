@@ -2,6 +2,12 @@
 
 Use these controlled values when registering raw materials for a viewpoint-oriented knowledge base.
 
+## Storage Boundary
+
+- Store `material_kind`, `topic_domain`, and `credibility_tier` in raw file front matter for durable high-level filtering.
+- Store detailed classification fields in `source/.harvest/link-index.sqlite3` by default: `evidence_type`, `ingestion_priority`, `lifecycle_status`, `insight_potential`, `source_bias`, and `compliance_status`.
+- Use `source/registers/` for the controlled vocabulary and optional curator-facing summaries, not as the only machine-readable classification store when the SQLite index exists.
+
 ## material_kind
 
 | Value | Meaning |

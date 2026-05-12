@@ -32,4 +32,4 @@ Use this template for project-root `source/ingest.md`. Keep one row per canonica
 
 ## Column Scope
 
-Do not add classification, quality-score, bias, or hidden pre-crawl operational columns by default. Put curation details in `source/registers/` or `notes` only when they are needed, and keep low-level link-index metadata inside `source/.harvest/link-index.sqlite3`.
+Do not add classification, quality-score, bias, or hidden pre-crawl operational columns by default. Put the high-level classification trio (`material_kind`, `topic_domain`, `credibility_tier`) in raw front matter, put detailed classification fields in `source/.harvest/link-index.sqlite3`, and use `source/registers/` or `notes` only for curator-facing summaries when they are useful.

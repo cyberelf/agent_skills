@@ -13,7 +13,7 @@ Canonical workflow instructions live in `.github/skills/insight-knowledge-harves
 
 - Only verify materials assigned by the parent agent or listed as `queued_verification` in `source/ingest.md`.
 - Update verified metadata in place inside project-root `source/raw/` and sync project-root `source/ingest.md`.
-- Sync the internal pre-crawl SQLite link index at `source/.harvest/link-index.sqlite3` when present so verified, rejected, metadata-only, or failed canonical URLs are not queued again by incremental runs.
+- Sync the internal pre-crawl SQLite link index at `source/.harvest/link-index.sqlite3` when present so verified, rejected, metadata-only, failed, or detailed-classified canonical URLs are not queued again by incremental runs.
 - Do not rewrite `source/raw/` files into summaries.
 - Do not create duplicate verified copies of raw content.
 - Do not write final insight notes unless the parent task explicitly asks for insight extraction after verification.
@@ -26,7 +26,7 @@ Canonical workflow instructions live in `.github/skills/insight-knowledge-harves
 Check that each raw file:
 
 - Has standard YAML front matter delimited by `---`.
-- Uses only minimal source identity and processing-state metadata by default.
+- Uses only minimal source identity, high-level classification, and processing-state metadata by default.
 - Represents exactly one canonical URL.
 - Contains fetched main source content rather than a summary or site overview.
 - Has source identity fields that match the canonical page as far as practical.
@@ -44,8 +44,15 @@ collection_id:
 title:
 canonical_url:
 source_name:
+author_or_org:
+publication_date:
 retrieved_at:
-verified_at:
+language:
+material_kind:
+topic_domain:
+credibility_tier:
+ingest_status:
+download_status:
 verification_status:
 raw_path:
 reviewed_at:
@@ -60,7 +67,7 @@ Concise verification notes should stay outside the raw file body, for example in
 - access or license caveats
 - recommended next action
 
-Optional classification or quality scoring may be added outside the raw files only when the parent task asks for it or when it is needed for curation.
+Only `material_kind`, `topic_domain`, and `credibility_tier` belong in raw front matter. Detailed classification or quality scoring belongs in `source/.harvest/link-index.sqlite3` by default, with optional curator-facing summaries in `source/registers/`.
 
 ## Approach
 
@@ -69,9 +76,9 @@ Optional classification or quality scoring may be added outside the raw files on
 3. Inspect the Markdown body to confirm it is a raw page capture, not a summary of a site or material family.
 4. Re-check the canonical URL when needed to confirm provenance, date, authorship, access caveats, and content match. Treat unspecified reuse license on publicly reachable pages as a caveat to record, not an automatic verification failure.
 5. Confirm the source is within the default 6-month freshness window, or verify that an older-source exception is explicitly documented.
-6. Update the raw file front matter in place with corrected metadata, `verification_status`, and `reviewed_at`.
+6. Update the raw file front matter in place with corrected source identity, high-level classification, `verification_status`, and `reviewed_at`.
 7. Update `source/ingest.md` with `ingest_status`, `verification_status`, `reviewed_at`, next action, and concise notes.
-8. Sync or update `source/.harvest/link-index.sqlite3` when it exists so it records the final `material_id`, `raw_path`, `download_status`, and `verification_status`.
+8. Sync or update `source/.harvest/link-index.sqlite3` when it exists so it records the final `material_id`, `raw_path`, `download_status`, `verification_status`, and detailed classification fields.
 9. Mark materials as `needs_followup`, `revisit`, `rejected`, or `failed` when the raw file is a summary, a bundle of multiple pages, an inaccessible source, a stale source without exception, or a poor source match.
 
 ## Output Format

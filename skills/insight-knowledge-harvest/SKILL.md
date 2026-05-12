@@ -13,14 +13,14 @@ This is a source-ingestion and verification workflow, not a final insight-writin
 
 The operating model is intentionally simple:
 
-- `source/raw/` stores one raw page capture per canonical source page or document.
+- `source/raw/` stores one raw page capture per canonical source page or document, plus minimal identity, processing-state, and high-level classification metadata.
 - `source/ingest.md` tracks minimal pipeline state for every candidate or accepted material.
-- `source/registers/` holds curator-facing notes such as classification, rejection reasons, gap lists, and deep-read queues.
-- `source/.harvest/` optionally stores hidden operational deduplication state in SQLite for broader discovery runs.
+- `source/registers/` holds curator-facing notes such as rejection reasons, gap lists, deep-read queues, and the classification schema vocabulary.
+- `source/.harvest/` optionally stores hidden operational deduplication state and detailed classification metadata in SQLite for broader discovery runs.
 
 In default additive mode, existing materials are treated as read-only context for topic promotion, deduplication, and gap detection. The skill normally adds new page-level captures, verifies newly downloaded files in place, and avoids rewriting prior raw materials unless the user explicitly asks for repair or re-verification.
 
-Raw files must remain raw captures, not summaries. Curator judgment belongs in ingest or register notes, while the raw file keeps only source identity plus processing-state metadata.
+Raw files must remain raw captures, not summaries. Curator judgment belongs in ingest, register notes, or the internal SQLite index, while the raw file keeps only source identity, processing-state metadata, and the high-level classification trio: `material_kind`, `topic_domain`, and `credibility_tier`.
 
 At a glance, this skill is best when you need to:
 
@@ -39,14 +39,15 @@ At a glance, this skill is best when you need to:
 
 ## Non-Negotiable Output Rules
 
-- `source/raw/` contains raw page captures, not summaries, analysis notes, quality scores, classification blocks, or site overviews.
+- `source/raw/` contains raw page captures, not summaries, analysis notes, quality scores, detailed classification blocks, or site overviews.
 - Each raw file represents exactly one canonical webpage, post, paper page, README, spec page, or document.
 - If multiple pages matter, create multiple raw files.
 - Raw files use standard Markdown YAML front matter delimited by `---`.
-- Raw front matter stays minimal: only source identity and processing-state fields.
+- Raw front matter stays minimal: only source identity fields, processing-state fields, and the high-level classification fields `material_kind`, `topic_domain`, and `credibility_tier`.
 - Verification updates the raw file's processing metadata in place; do not create a parallel verified copy or `source/verified/` record by default.
-- Curation, classification, scoring, rejection reasons, and insight directions belong in `source/registers/` or `source/ingest.md`, not in `source/raw/`.
+- Curation, detailed classification, scoring, rejection reasons, and insight directions belong in `source/.harvest/link-index.sqlite3`, `source/registers/`, or `source/ingest.md`, not in `source/raw/`.
 - Pre-crawl link discovery state belongs in an internal SQLite database under `source/.harvest/` by default; do not copy hidden operational metadata from that database into `source/raw/`, `source/ingest.md`, or downstream insight notes unless the user explicitly asks for an audit/export.
+- Detailed classification fields other than `material_kind`, `topic_domain`, and `credibility_tier` belong in the internal SQLite link index by default. This includes `evidence_type`, `ingestion_priority`, `lifecycle_status`, `insight_potential`, `source_bias`, and `compliance_status`.
 - The source-side classification schema must exist under `source/registers/`; do not rely only on the skill-local reference file.
 - By default, do not keep materials older than 6 months from the retrieval date unless the user explicitly requests historical coverage or no newer canonical source exists and the exception is recorded.
 - Do not store harvested outputs inside the skill directory.
@@ -128,7 +129,7 @@ Purpose:
 
 - Scan source-priority files, ingest/register notes, supplied URL lists, and optionally seed/index/feed pages for possible links.
 - Canonicalize URLs, strip common tracking parameters, remove fragments, and deduplicate by canonical URL.
-- Record internal operational state in SQLite: seen count, observations, collection hint, crawl/download/verification status, material ID, raw path, title/source/date hints, errors, and other metadata that should not clutter user-facing notes.
+- Record internal operational state in SQLite: seen count, observations, collection hint, crawl/download/verification status, material ID, raw path, title/source/date hints, detailed classification metadata, errors, and other metadata that should not clutter user-facing notes.
 - Sync existing `source/ingest.md` and `source/raw/*.md` metadata into the database so incremental runs avoid re-adding already downloaded, metadata-only, rejected, or verified materials.
 - Export a small pending URL list for agent quality-gate review without exposing hidden operational metadata by default.
 
@@ -148,8 +149,8 @@ Important constraints:
 - The pre-crawl CLI does not replace the existing download workflow. It indexes candidate links and state only; accepted pages are still captured through the current web fetch, scripted fetch, browser fallback, and verifier flow.
 - `scan --fetch-seeds` may fetch seed/index/feed pages once to enumerate links, but it must not recursively follow discovered candidate pages, save raw article bodies, or treat seed-page extraction as verification.
 - The database is authoritative only for deduplication and processing state. The human-readable `source/ingest.md` remains the minimal candidate/material status list, and `source/raw/` remains the source of raw page content.
-- Do not surface `internal_metadata_json`, observation history, URL hashes, referrer lists, stripped query parameters, or other operational fields in downstream analysis unless the user asks for a diagnostics export.
-- After actual download or verification, run the CLI `sync` command or otherwise update the database so `material_id`, `raw_path`, `download_status`, and `verification_status` stay aligned with `source/ingest.md` and `source/raw/`.
+- Do not surface `internal_metadata_json`, observation history, URL hashes, referrer lists, stripped query parameters, or other operational fields in downstream analysis unless the user asks for a diagnostics export. Raw front matter may surface only the approved high-level classification trio.
+- After actual download or verification, run the CLI `sync` command or otherwise update the database so `material_id`, `raw_path`, `download_status`, `verification_status`, and detailed classification fields stay aligned with `source/ingest.md`, `source/raw/`, and `source/registers/`.
 
 ## Minimal Raw Front Matter
 
@@ -166,6 +167,9 @@ author_or_org:
 publication_date:
 retrieved_at:
 language:
+material_kind:
+topic_domain:
+credibility_tier:
 ingest_status:
 download_status:
 verification_status:
@@ -177,9 +181,10 @@ reviewed_at:
 Field intent:
 
 - `material_id`, `collection_id`, `title`, `canonical_url`, `source_name`, `author_or_org`, `publication_date`, `retrieved_at`, and `language` identify the source.
+- `material_kind`, `topic_domain`, and `credibility_tier` provide durable high-level classification for filtering raw files. Use controlled values from the classification schema; `topic_domain` may contain comma-separated controlled values when one material clearly spans multiple domains.
 - `ingest_status`, `download_status`, `verification_status`, `raw_path`, and `reviewed_at` track pipeline state.
 
-Do not put quality scores, classification labels, bias notes, curation summaries, evidence pointers, or candidate insights in raw-file front matter.
+Do not put quality scores, detailed classification fields, bias notes, curation summaries, evidence pointers, or candidate insights in raw-file front matter. Store `evidence_type`, `ingestion_priority`, `lifecycle_status`, `insight_potential`, `source_bias`, and `compliance_status` in `source/.harvest/link-index.sqlite3` by default, with human-readable summaries in registers only when useful.
 
 ## Material Unit
 
@@ -220,16 +225,16 @@ If the user provides a collection topic, scope, or research direction but no can
 ## Procedure
 
 1. Define the collection target: topic, audience, scope, time window, source languages, and exclusion rules. Default the time window to the last 6 months unless the user asks for a historical or foundational set.
-2. Initialize `source/`, `source/raw/`, `source/registers/`, `source/ingest.md`, and `source/registers/classification-schema.md` at the project root. Ensure the source-side classification schema contains the full current controlled vocabulary from the reference file.
+2. Initialize `source/`, `source/raw/`, `source/registers/`, `source/ingest.md`, `source/.harvest/link-index.sqlite3`, and `source/registers/classification-schema.md` at the project root as needed. Ensure the source-side classification schema contains the full current controlled vocabulary from the reference file.
 3. Inspect the current KB as read-only context and promote new candidate topics from existing collections, gaps, and verified materials before widening discovery. If no candidate URLs are provided, combine those promoted topics with the default source bases in `source-priority.md`, then resolve selected items to page-level URLs before ingest. Prefer items published within the active time window.
 4. Run the pre-crawl link index CLI for broad or incremental discovery. Sync existing ingest/raw state, scan default source bases and curator notes, optionally scan seed/index/feed pages with `--fetch-seeds`, and use the database to suppress duplicate URLs before spending agent attention on quality decisions.
 5. Canonicalize each surviving candidate to a page-level URL. Avoid generic site roots unless the root page itself is the source material.
-6. Apply the quality gate and record accept, reject, watch, revisit, or deep_read decisions in the ingest list or register. Write curator-facing notes in Chinese by default.
-7. Download accepted pages through the embedded downloader role using the existing retrieval workflow. Save each page as `source/raw/<material-id>-<slug>.md` with minimal YAML front matter and raw page body Markdown.
-8. For publicly reachable pages in this internal experimental workflow, attempt best-effort raw capture even when the reuse license is unspecified. Record license, copyright, and access caveats in `source/ingest.md` or `source/registers/`, not in raw front matter.
+6. Apply the quality gate and record accept, reject, watch, revisit, or deep_read decisions in the ingest list or register. Assign `material_kind`, `topic_domain`, and `credibility_tier` when enough evidence is available, and put detailed classification fields into the SQLite link index. Write curator-facing notes in Chinese by default.
+7. Download accepted pages through the embedded downloader role using the existing retrieval workflow. Save each page as `source/raw/<material-id>-<slug>.md` with minimal YAML front matter, the high-level classification trio, and raw page body Markdown.
+8. For publicly reachable pages in this internal experimental workflow, attempt best-effort raw capture even when the reuse license is unspecified. Record license, copyright, and access caveats in `source/.harvest/link-index.sqlite3`, `source/ingest.md`, or `source/registers/`, not in raw front matter.
 9. For authentication-gated, paywalled, blocked, CAPTCHA-protected, or technically inaccessible sources, create metadata-only status records and do not fabricate body content from summaries.
-10. Verify newly downloaded or newly queued raw captures. Confirm that each new file is a one-page capture, update its raw front matter in place with corrected metadata plus verification status and review date, and record concise verification notes in Chinese in `source/ingest.md` or `source/registers/`.
-11. Sync the pre-crawl SQLite index after download and verification so incremental runs know which canonical URLs already map to a `material_id`, `raw_path`, and terminal status.
+10. Verify newly downloaded or newly queued raw captures. Confirm that each new file is a one-page capture, update its raw front matter in place with corrected identity, high-level classification, verification status, and review date, and record concise verification notes in Chinese in `source/ingest.md` or `source/registers/`.
+11. Sync the pre-crawl SQLite index after download and verification so incremental runs know which canonical URLs already map to a `material_id`, `raw_path`, terminal status, and detailed classification state.
 12. Deduplicate and cluster related pages in registers, while preserving one raw file per canonical URL.
 13. Extract final insights only if the user asks for that later, using verified raw captures plus ingest/register notes as input.
 
@@ -242,7 +247,7 @@ Use a best-effort retrieval chain for accepted public pages:
 3. Browser fallback: when the page requires normal browser rendering, use browser tools to load the canonical page, inspect the rendered DOM, and capture the readable page body.
 4. Metadata-only fallback: use metadata-only only when the material cannot be captured from publicly reachable content after those attempts, or when access requires login, payment, CAPTCHA solving, credentialed sessions, or bypassing technical access controls.
 
-When scripts or browser tools are used, keep the output shape unchanged: one raw Markdown file per canonical material, minimal raw front matter, and caveats in ingest/register notes.
+When scripts or browser tools are used, keep the output shape unchanged: one raw Markdown file per canonical material, minimal raw front matter with the high-level classification trio, and caveats in the SQLite index plus ingest/register notes.
 
 ## Internal Experimental Capture Policy
 
@@ -260,14 +265,14 @@ Responsibilities:
 - Before fetching, check existing `source/ingest.md`, `source/raw/`, and the pre-crawl link index when present so a canonical URL is not downloaded twice.
 - Use web fetch first, scripted fetch second, and browser-assisted capture third when needed.
 - Preserve the page's main readable content as Markdown, including headings, paragraphs, lists, links, tables, and code blocks where available.
-- Add only the minimal YAML front matter described above.
+- Add only the minimal YAML front matter described above, including `material_kind`, `topic_domain`, and `credibility_tier` when assigned by the parent workflow or obvious from the accepted candidate row.
 - For publicly reachable pages, capture best-effort raw content even when the reuse license is unspecified; record caveats outside raw front matter.
 - Use metadata-only for authentication-gated, paywalled, blocked, CAPTCHA-protected, or technically inaccessible sources.
 - Skip sources older than 6 months by default unless the parent task explicitly allows a historical exception or no newer canonical source exists and the exception is recorded.
 - Add or update the assigned new material row in `source/ingest.md` with pipeline state, paths, retrieval date, and any download caveat.
-- After downloading or creating a metadata-only record, sync or update the pre-crawl link index with `material_id`, `raw_path`, `download_status`, and `verification_status` when the database exists.
+- After downloading or creating a metadata-only record, sync or update the pre-crawl link index with `material_id`, `raw_path`, `download_status`, `verification_status`, and any detailed classification fields when the database exists.
 
-The downloader does not perform final verification, quality scoring, classification, or insight writing.
+The downloader does not perform final verification, quality scoring, detailed classification, or insight writing. It may copy or lightly infer the high-level classification trio required by raw front matter.
 
 ## Source Material Verifier Subagent
 
@@ -287,17 +292,22 @@ Responsibilities:
 
 The verifier does not write final insight notes unless the user explicitly asks for insight extraction after verification.
 
-## Optional Classification And Scoring
+## Classification And Scoring
 
-Classification and scoring are optional curation aids. They should not be placed in raw-file front matter.
+Classification is split by storage boundary:
 
-When classification is useful, use [classification schema](./references/classification-schema.md) and ensure the full schema is copied into `source/registers/classification-schema.md` inside the project root. Keep classification out of `source/raw/` unless the user explicitly asks for enriched raw metadata.
+- Raw front matter carries only `material_kind`, `topic_domain`, and `credibility_tier`.
+- The internal SQLite link index carries detailed classification fields: `evidence_type`, `ingestion_priority`, `lifecycle_status`, `insight_potential`, `source_bias`, and `compliance_status`.
+- `source/registers/classification-schema.md` carries the controlled vocabulary and may include Chinese curator-facing summaries, but the SQLite index is the default machine-readable store for detailed classification state.
+
+When classification is useful, use [classification schema](./references/classification-schema.md) and ensure the full schema is copied into `source/registers/classification-schema.md` inside the project root. Keep only the high-level classification trio in `source/raw/`; keep detailed classifications in the SQLite index and optional human-readable register notes.
 
 When adding classification to a collection:
 
 - Do not add only a partial subset when the collection needs the schema. Copy the full schema headings and controlled values into the source-side schema file first, then use the relevant subset in collection notes.
 - If the source-side classification schema already exists, merge in any missing sections or controlled values rather than overwriting local additions blindly.
 - Keep the controlled values in English and explain them in Chinese in the source-side copy when producing Chinese KB outputs.
+- Run `python scripts/precrawl_link_index.py --workspace . sync --collection-id <collection-id>` after classification edits so register/raw classification state is reflected in `source/.harvest/link-index.sqlite3`.
 
 When scoring is useful, score each dimension from 0 to 5 in the register or ingest notes:
 
@@ -321,10 +331,10 @@ Default decision rules:
 ## Default Deliverables
 
 - `source/ingest.md` with one row per canonical candidate page and minimal status fields.
-- Internal `source/.harvest/link-index.sqlite3` when pre-crawl scanning is used, containing deduplication and processing-state metadata that is not meant for downstream reading by default.
+- Internal `source/.harvest/link-index.sqlite3` when pre-crawl scanning is used, containing deduplication, processing-state, and detailed classification metadata that is not meant for downstream reading by default.
 - `source/registers/classification-schema.md` containing the full current classification schema used by the collection.
 - `source/registers/<collection-id>.md` with candidate source list and accept, reject, watch, revisit, or deep_read decisions.
-- `source/raw/<material-id>-<slug>.md` raw Markdown page captures, one canonical URL per file, with minimal YAML front matter updated in place after verification.
+- `source/raw/<material-id>-<slug>.md` raw Markdown page captures, one canonical URL per file, with minimal YAML front matter and the high-level classification trio updated in place after verification.
 - Rejection log with short reasons.
 - Gap list for missing counterpoints, weak evidence, absent methodology, or unvalidated claims.
 - Optional deep-read queue for later viewpoint extraction.

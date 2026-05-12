@@ -2,7 +2,7 @@
 
 Use this template for files under project-root `source/raw/`.
 
-Each raw file must represent exactly one canonical webpage, post, paper page, README, spec page, or document. The body should be the fetched main source content converted to Markdown, not a summary, curator note, quality score, classification record, or site overview.
+Each raw file must represent exactly one canonical webpage, post, paper page, README, spec page, or document. The body should be the fetched main source content converted to Markdown, not a summary, curator note, quality score, detailed classification record, or site overview.
 
 ```markdown
 ---
@@ -15,6 +15,9 @@ author_or_org:
 publication_date:
 retrieved_at:
 language:
+material_kind:
+topic_domain:
+credibility_tier:
 ingest_status: queued_verification
 download_status: downloaded
 verification_status: queued
@@ -30,8 +33,9 @@ Raw page content converted to Markdown goes here. Preserve the page's headings, 
 ## Field Rules
 
 - Use standard YAML front matter delimited by `---`.
-- Keep front matter minimal. By default, include only source identity fields and processing-state fields.
-- Do not add quality scores, classification labels, bias notes, curation summaries, section pointers, evidence pointers, or candidate insights to raw front matter.
+- Keep front matter minimal. By default, include only source identity fields, processing-state fields, and the high-level classification fields `material_kind`, `topic_domain`, and `credibility_tier`.
+- Use controlled values from `source/registers/classification-schema.md`; `topic_domain` may contain comma-separated controlled values when needed.
+- Do not add quality scores, detailed classification fields, bias notes, curation summaries, section pointers, evidence pointers, or candidate insights to raw front matter. Store `evidence_type`, `ingestion_priority`, `lifecycle_status`, `insight_potential`, `source_bias`, and `compliance_status` in `source/.harvest/link-index.sqlite3` by default.
 - Use ISO dates when known: `YYYY-MM-DD`.
 - Keep `raw_path` project-root relative, for example `source/raw/EAIH-2026-05-08-001-example.md`.
 - Leave `reviewed_at` blank until a verification pass updates the file in place.
@@ -63,6 +67,9 @@ author_or_org:
 publication_date:
 retrieved_at:
 language:
+material_kind:
+topic_domain:
+credibility_tier:
 ingest_status: metadata_only
 download_status: metadata_only
 verification_status: needs_followup
