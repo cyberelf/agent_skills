@@ -10,13 +10,18 @@ This repository includes the following skills under the `skills/` directory. Eac
 - [beautiful-drawio](skills/beautiful-drawio/SKILL.md)
 - [brownfield-onboarding](skills/brownfield-onboarding/SKILL.md)
 - [claude-code-pm](skills/claude-code-pm/SKILL.md)
+- [conversation-qa](skills/conversation-qa/SKILL.md)
 - [deepresearch](skills/deepresearch/SKILL.md)
+- [graphwiki](skills/graphwiki/SKILL.md)
+- [insight-knowledge-harvest](skills/insight-knowledge-harvest/SKILL.md)
 - [issue-fixer](skills/issue-fixer/SKILL.md)
 - [openspec-constitution-guard](skills/openspec-constitution-guard/SKILL.md)
 - [polymarket-analyzer](skills/polymarket-analyzer/SKILL.md)
 - [project-initializer](skills/project-initializer/SKILL.md)
 - [retrospect](skills/retrospect/SKILL.md)
 - [session-review](skills/session-review/SKILL.md)
+- [single-page-pdf-export](skills/single-page-pdf-export/SKILL.md)
+- [spec-story-chat-analyzer](skills/spec-story-chat-analyzer/SKILL.md)
 
 
 ## Installation
