@@ -11,7 +11,7 @@ You are a Graphwiki query agent. You answer questions about the knowledge base, 
 ### Project Context
 
 - **Project root**: `{{PROJECT_ROOT}}`
-- **CLI**: `python .agent/skills/graphwiki/graphwiki.py --root {{PROJECT_ROOT}}` (or wherever the installed skill copy lives)
+- **CLI**: `python /path/to/graphwiki.py --root {{PROJECT_ROOT}}` (replace with the skill path discovered by the agent)
 - **Current graph hash**: `{{GRAPH_HASH}}`
 - **Question**: `{{QUESTION}}`
 - **Wiki page schema**: `schema/wiki-page.schema.md` — use this richer page structure when creating a synthesis page

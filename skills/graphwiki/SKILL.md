@@ -1,21 +1,36 @@
 ---
 name: graphwiki
-description: Agent-first graph-backed knowledge wiki builder with a self-contained CLI. Use for Graphwiki init/build/ingest/update, source indexing, semantic entity and relationship extraction, generated wiki pages, graph JSON/HTML explorer, evidence line ranges, query/explain question answering, synthesis pages, HTML reports, adding confirmed entity types, applying patches, cleanup, validation, tasks, and SQLite cache generation. Installs under .agent/skills/graphwiki, not .claude.
+description: Agent-first graph-backed knowledge wiki builder with a self-contained CLI. Use for Graphwiki init/build/ingest/update, source indexing, semantic entity and relationship extraction, generated wiki pages, graph JSON/HTML explorer, evidence line ranges, query/explain question answering, synthesis pages, HTML reports, adding confirmed entity types, applying patches, cleanup, validation, tasks, and SQLite cache generation.
 ---
 
 # Graphwiki
 
 Graphwiki builds and maintains a graph-backed knowledge wiki without installing a separate package. This skill contains the CLI at `graphwiki.py` and the bundled Python package under `tool/`.
 
-Use this skill when the user asks to initialize, build, ingest, update, query, explain, answer from, report on, clean up, validate, cache, or extend a Graphwiki knowledge base. The installed project-local skill path is `.agent/skills/graphwiki/`; do not install or sync Graphwiki skill files under `.claude/`.
+Use this skill when the user asks to initialize, build, ingest, update, query, explain, answer from, report on, clean up, validate, cache, or extend a Graphwiki knowledge base. The user-facing entrypoint is the skill/agent, not the script; `graphwiki.py` is the internal executor that the skill calls after the agent decides what workflow is appropriate.
 
-## Command Runner
+## Operation Entrypoint
 
-Run commands through the bundled script:
+Users should ask the agent for operations such as "initialize this knowledge base", "update changed documents", "extract entities and build wiki pages", "query a concept relationship", or "generate an HTML report". The agent then selects the workflow and internally calls the bundled executor:
 
 ```bash
 python /path/to/this/skill/graphwiki.py --root <project-root> <command>
 ```
+
+Do not make the script the user's primary interface. The agent owns skill discovery, path substitution, command selection, and execution.
+
+## Load-Time Repo Guidance
+
+When this skill is loaded, the agent should quickly inspect the current repository state and tell the user what kinds of requests are available:
+
+- If `.graphwiki/graph.json` is missing: suggest requests such as "initialize and build the knowledge base" or "index the documents under `source/`."
+- If `source/` exists but the graph has no semantic entities or wiki pages: suggest "extract entities and relationships concurrently and build wiki pages."
+- If `.graphwiki/GRAPH_REPORT.md` or `tasks next` shows pending/stale/orphaned/needs_update work: suggest "process pending tasks," "repair stale evidence," or "update affected pages."
+- If source documents were added or changed: suggest "run an incremental update and process only changed documents."
+- If configured entity types are insufficient: suggest "recommend and confirm new entity types" or "add an entity type and re-scan existing sources."
+- If the graph already has semantic entities: suggest "query entity relationships," "explain shortest paths," or "answer from the knowledge graph."
+- If the user needs a deliverable: suggest "generate a standalone HTML report."
+- If an answer combines multiple sources: suggest "save the answer as a synthesis knowledge page."
 
 ## Schema Directory
 
@@ -36,7 +51,7 @@ Graphwiki has four primary application scenarios. Keep them separate when decidi
 Use this when the user starts a new knowledge base or asks for a full first build from an existing `source/` corpus.
 
 1. Confirm the project root and ensure curated raw documents are under `source/`. Do not put generated wiki pages into `source/`.
-2. Run `init`, then `build`. This creates deterministic project state: source document nodes, collection nodes, hashes, source views, schemas, reports, graph explorer, build-time `community_id` assignments, and an installed local skill copy. Re-running `build` preserves existing semantic entities, wiki page nodes, relationships, and evidence edges.
+2. Run `init`, then `build`. This creates deterministic project state: source document nodes, collection nodes, hashes, source views, schemas, reports, graph explorer, and build-time `community_id` assignments. Re-running `build` preserves existing semantic entities, wiki page nodes, relationships, and evidence edges.
 3. Read `.graphwiki/entities/schema.json`, `.graphwiki/entities/concept.md`, `.graphwiki/entities/synthesis.md`, and any project-specific entity type docs.
 4. Run `entity-types recommend` to get deterministic candidate type suggestions from `source/`. Use the tool question UI to ask the user which suggested types to confirm; only then run `entity-types add ... --confirmed`.
 5. Batch the source corpus by collection, document size, or entity type. Use `tasks next` and `tasks claim` when pending actions exist or when multiple subagents can process independent source groups.

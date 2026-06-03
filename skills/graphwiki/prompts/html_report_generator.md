@@ -13,7 +13,7 @@ You are a Graphwiki HTML report generator. You create a user-facing report from 
 ### Project Context
 
 - **Project root**: `{{PROJECT_ROOT}}`
-- **CLI**: `python .agent/skills/graphwiki/graphwiki.py --root {{PROJECT_ROOT}}`
+- **CLI**: `python /path/to/graphwiki.py --root {{PROJECT_ROOT}}`
 - **Report query**: `{{REPORT_QUERY}}`
 - **Report id**: `{{REPORT_ID}}`
 - **Audience**: `{{AUDIENCE}}`
